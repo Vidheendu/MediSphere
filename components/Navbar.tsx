@@ -2,9 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/auth-context";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, profile, role, signOut } = useAuth();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/login");
+  };
+
+  const dashboardPath = role === "doctor" ? "/doctor/dashboard" : "/dashboard";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur-xs">
@@ -12,7 +23,6 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-600 text-white shadow-xs group-hover:bg-teal-700 transition-colors">
-            {/* Medical Sphere / Stethoscope Icon */}
             <svg
               className="h-6 w-6"
               fill="none"
@@ -48,20 +58,20 @@ export default function Navbar() {
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-8">
-          <a
-            href="#specialities"
+          <Link
+            href="/#specialities"
             className="text-sm font-medium text-slate-600 hover:text-teal-600 transition-colors"
           >
             Specialities
-          </a>
-          <a
-            href="#how-it-works"
+          </Link>
+          <Link
+            href="/#how-it-works"
             className="text-sm font-medium text-slate-600 hover:text-teal-600 transition-colors"
           >
             How It Works
-          </a>
-          <a
-            href="#locations"
+          </Link>
+          <Link
+            href="/#locations"
             className="text-sm font-medium text-slate-600 hover:text-teal-600 transition-colors flex items-center gap-1.5"
           >
             <svg
@@ -85,29 +95,55 @@ export default function Navbar() {
               />
             </svg>
             Bhopal
-          </a>
+          </Link>
         </nav>
 
-        {/* Action Buttons */}
+        {/* Desktop Action Buttons */}
         <div className="hidden md:flex items-center gap-3">
-          <a
-            href="#specialities"
-            className="text-sm font-semibold text-teal-700 hover:text-teal-800 px-3.5 py-2 rounded-lg hover:bg-teal-50/60 transition-colors"
+          <Link
+            href="/#specialities"
+            className="text-sm font-semibold text-teal-700 hover:text-teal-800 px-3 py-2 rounded-lg hover:bg-teal-50/60 transition-colors"
           >
             Find Doctors
-          </a>
-          <button
-            type="button"
-            className="text-sm font-medium text-slate-700 hover:text-slate-900 px-3.5 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
-          >
-            Login
-          </button>
-          <button
-            type="button"
-            className="text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded-lg shadow-xs transition-colors"
-          >
-            Doctor Login
-          </button>
+          </Link>
+
+          {user ? (
+            <div className="flex items-center gap-2.5">
+              <Link
+                href={dashboardPath}
+                className="text-sm font-semibold text-slate-800 hover:text-teal-700 px-3.5 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2"
+              >
+                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                <span>
+                  {role === "doctor"
+                    ? `Dr. ${profile?.full_name || "Doctor"}`
+                    : profile?.full_name || "Dashboard"}
+                </span>
+              </Link>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="text-sm font-medium text-slate-600 hover:text-rose-600 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Link
+                href="/login"
+                className="text-sm font-medium text-slate-700 hover:text-slate-900 px-3.5 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                href="/doctor/login"
+                className="text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded-lg shadow-xs transition-colors"
+              >
+                Doctor Login
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Mobile Menu Toggle Button */}
@@ -158,29 +194,29 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 shadow-md">
           <div className="flex flex-col space-y-3">
-            <a
-              href="#specialities"
+            <Link
+              href="/#specialities"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2 text-base font-medium text-slate-800 hover:bg-slate-50 rounded-lg"
             >
               Find Doctors
-            </a>
-            <a
-              href="#specialities"
+            </Link>
+            <Link
+              href="/#specialities"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2 text-base font-medium text-slate-800 hover:bg-slate-50 rounded-lg"
             >
               Specialities
-            </a>
-            <a
-              href="#how-it-works"
+            </Link>
+            <Link
+              href="/#how-it-works"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2 text-base font-medium text-slate-800 hover:bg-slate-50 rounded-lg"
             >
               How It Works
-            </a>
-            <a
-              href="#locations"
+            </Link>
+            <Link
+              href="/#locations"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2 text-base font-medium text-slate-800 hover:bg-slate-50 rounded-lg flex items-center gap-2"
             >
@@ -204,21 +240,47 @@ export default function Navbar() {
                 />
               </svg>
               Bhopal & Nearby Locations
-            </a>
+            </Link>
 
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
-              <button
-                type="button"
-                className="w-full py-2.5 px-4 text-center text-sm font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                Login
-              </button>
-              <button
-                type="button"
-                className="w-full py-2.5 px-4 text-center text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors"
-              >
-                Doctor Login
-              </button>
+              {user ? (
+                <>
+                  <Link
+                    href={dashboardPath}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full py-2.5 px-4 text-center text-sm font-semibold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg"
+                  >
+                    Go to {role === "doctor" ? "Doctor Dashboard" : "Patient Dashboard"}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleSignOut();
+                    }}
+                    className="w-full py-2 px-4 text-center text-sm font-medium text-rose-600 bg-white border border-rose-200 rounded-lg"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full py-2.5 px-4 text-center text-sm font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/doctor/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full py-2.5 px-4 text-center text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors"
+                  >
+                    Doctor Login
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

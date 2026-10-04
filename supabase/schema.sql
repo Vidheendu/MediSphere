@@ -113,6 +113,34 @@ CREATE TRIGGER set_doctors_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_updated_at();
 
+-- ------------------------------------------------------------------------------
+-- Trigger to automatically create a profile record when a new user signs up
+-- ------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, email, phone, location, role)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'phone', ''),
+    COALESCE(NEW.raw_user_meta_data->>'location', ''),
+    'patient' -- Strictly enforce patient role
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    full_name = EXCLUDED.full_name,
+    phone = EXCLUDED.phone,
+    location = EXCLUDED.location;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
 -- ==============================================================================
 -- SEED DATA: INSERT ONLY THE 6 SPECIALITIES (NO FAKE DOCTORS/CLINICS)
 -- ==============================================================================
@@ -190,6 +218,15 @@ CREATE POLICY "Allow users to view own profile or doctor profiles"
     auth.uid() = id
     OR role = 'doctor'
     OR public.is_admin()
+  );
+
+-- Users can insert their own profile with role = 'patient'
+CREATE POLICY "Allow users to insert own profile"
+  ON public.profiles FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    auth.uid() = id
+    AND role = 'patient'
   );
 
 -- Users can update only their own profile

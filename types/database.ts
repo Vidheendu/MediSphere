@@ -13,7 +13,7 @@ export type DoctorVerificationStatus =
   | "rejected"
   | "suspended";
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       profiles: {
@@ -47,6 +47,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       specialities: {
         Row: {
@@ -70,6 +71,7 @@ export interface Database {
           description?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       clinics: {
         Row: {
@@ -114,6 +116,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       doctors: {
         Row: {
@@ -155,10 +158,23 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
     };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
-}
+};
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Speciality = Database["public"]["Tables"]["specialities"]["Row"];
