@@ -1,16 +1,17 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabasePublishableKey =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "";
 
-let clientInstance: SupabaseClient | null = null;
+let clientInstance: SupabaseClient<Database> | null = null;
 
 /**
  * Returns a reusable client-side Supabase instance.
  * Utilizes NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.
  */
-export function getSupabaseClient(): SupabaseClient {
+export function getSupabaseClient(): SupabaseClient<Database> {
   if (clientInstance) {
     return clientInstance;
   }
@@ -21,7 +22,7 @@ export function getSupabaseClient(): SupabaseClient {
     );
   }
 
-  clientInstance = createClient(
+  clientInstance = createClient<Database>(
     supabaseUrl || "https://placeholder.supabase.co",
     supabasePublishableKey || "placeholder-key"
   );
