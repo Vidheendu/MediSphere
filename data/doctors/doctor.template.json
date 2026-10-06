@@ -1,0 +1,17 @@
+{
+  "_comment": "TEMPLATE ONLY: Copy this structure when preparing verified real doctor records. Fill with real verified public information only. Use null for any field that cannot be verified.",
+  "name": "Dr. Full Name",
+  "speciality": "Cardiology",
+  "qualification": "MBBS, MD",
+  "experience_years": null,
+  "consultation_fee": null,
+  "about": null,
+  "clinic": null,
+  "address": null,
+  "city": "Bhopal",
+  "state": "Madhya Pradesh",
+  "phone": null,
+  "website": null,
+  "source": "State Medical Council Public Registry / Hospital Website",
+  "verification_status": "pending"
+}

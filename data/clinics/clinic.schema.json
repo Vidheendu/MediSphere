@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ClinicRecord",
+  "description": "Standard schema for importing verified real clinic and hospital facilities into MediSphere",
+  "type": "object",
+  "required": ["name", "source"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Registered clinic, diagnostic center, or hospital facility name",
+      "minLength": 2
+    },
+    "address": {
+      "type": ["string", "null"],
+      "description": "Physical street address of facility. Use null if unconfirmed."
+    },
+    "city": {
+      "type": ["string", "null"],
+      "default": "Bhopal",
+      "description": "City where facility is located (e.g. 'Bhopal')"
+    },
+    "state": {
+      "type": ["string", "null"],
+      "default": "Madhya Pradesh",
+      "description": "State where facility is located (e.g. 'Madhya Pradesh')"
+    },
+    "pincode": {
+      "type": ["string", "null"],
+      "description": "6-digit postal code. Use null if unconfirmed."
+    },
+    "phone": {
+      "type": ["string", "null"],
+      "description": "Official public telephone / contact number. Use null if unconfirmed."
+    },
+    "website": {
+      "type": ["string", "null"],
+      "description": "Official public website URL. Use null if unavailable."
+    },
+    "latitude": {
+      "type": ["number", "null"],
+      "description": "GPS latitude. Use null if unavailable."
+    },
+    "longitude": {
+      "type": ["number", "null"],
+      "description": "GPS longitude. Use null if unavailable."
+    },
+    "source": {
+      "type": "string",
+      "description": "Verifiable public source of the facility information (e.g. Municipal Registry, Hospital Directory). REQUIRED for all imports.",
+      "minLength": 5
+    }
+  },
+  "additionalProperties": false
+}

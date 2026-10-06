@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DoctorRecord",
+  "description": "Standard schema for importing verified real doctor records into MediSphere",
+  "type": "object",
+  "required": ["name", "speciality", "source"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Full legal or professional name of the doctor (e.g. 'Dr. Sunita Sharma')",
+      "minLength": 2
+    },
+    "speciality": {
+      "type": "string",
+      "description": "Medical specialty. Must match one of: Dermatology, ENT, Dentistry, Cardiology, Neurology, Orthopedics",
+      "enum": [
+        "Dermatology",
+        "ENT",
+        "Dentistry",
+        "Cardiology",
+        "Neurology",
+        "Orthopedics"
+      ]
+    },
+    "qualification": {
+      "type": ["string", "null"],
+      "description": "Official medical qualifications and degrees (e.g. 'MBBS, MD (Dermatology)'). Use null if unconfirmed."
+    },
+    "experience_years": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Verified years of clinical experience. Use null if unconfirmed."
+    },
+    "consultation_fee": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "description": "Published consultation fee in INR (₹). Use null if unconfirmed."
+    },
+    "about": {
+      "type": ["string", "null"],
+      "description": "Brief verified professional summary or clinical focus. Use null if unavailable."
+    },
+    "clinic": {
+      "type": ["string", "null"],
+      "description": "Name of affiliated hospital or clinic. Use null if practice address is independent or unconfirmed."
+    },
+    "address": {
+      "type": ["string", "null"],
+      "description": "Physical practice street address. Use null if unconfirmed."
+    },
+    "city": {
+      "type": ["string", "null"],
+      "description": "City of practice (e.g. 'Bhopal'). Use null if unconfirmed."
+    },
+    "state": {
+      "type": ["string", "null"],
+      "description": "State of practice (e.g. 'Madhya Pradesh'). Use null if unconfirmed."
+    },
+    "phone": {
+      "type": ["string", "null"],
+      "description": "Official public clinic contact number. Use null if unconfirmed."
+    },
+    "website": {
+      "type": ["string", "null"],
+      "description": "Official practice or clinic website URL. Use null if unavailable."
+    },
+    "source": {
+      "type": "string",
+      "description": "Verifiable public source of the information (e.g., State Medical Council Registry, Official Hospital Directory). REQUIRED for all imports.",
+      "minLength": 5
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": ["pending"],
+      "default": "pending",
+      "description": "Verification state. Always defaults to 'pending' upon import. Never automatically verified."
+    }
+  },
+  "additionalProperties": false
+}

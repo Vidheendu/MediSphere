@@ -1,0 +1,13 @@
+{
+  "_comment": "TEMPLATE ONLY: Copy this structure when preparing verified real clinic records. Fill with real verified public information only. Use null for any field that cannot be verified.",
+  "name": "Clinic or Hospital Name",
+  "address": null,
+  "city": "Bhopal",
+  "state": "Madhya Pradesh",
+  "pincode": null,
+  "phone": null,
+  "website": null,
+  "latitude": null,
+  "longitude": null,
+  "source": "Municipal Healthcare Directory / Official Hospital Registry"
+}

@@ -22,6 +22,12 @@ export function getSupabaseClient(): SupabaseClient<Database> {
     );
   }
 
+  if (typeof globalThis !== "undefined" && typeof globalThis.WebSocket === "undefined") {
+    // Polyfill for Node.js environments (CLI tools/scripts) where native WebSocket is not globally exposed
+    // @ts-expect-error Minimal constructor to allow Supabase initialization in Node CLI runtimes
+    globalThis.WebSocket = class {};
+  }
+
   clientInstance = createClient<Database>(
     supabaseUrl || "https://placeholder.supabase.co",
     supabasePublishableKey || "placeholder-key"
