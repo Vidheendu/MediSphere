@@ -59,7 +59,7 @@ export default function Navbar() {
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-8">
           <Link
-            href="/#specialities"
+            href="/specialities"
             className="text-sm font-medium text-slate-600 hover:text-teal-600 transition-colors"
           >
             Specialities
@@ -101,7 +101,7 @@ export default function Navbar() {
         {/* Desktop Action Buttons */}
         <div className="hidden md:flex items-center gap-3">
           <Link
-            href="/#specialities"
+            href="/specialities"
             className="text-sm font-semibold text-teal-700 hover:text-teal-800 px-3 py-2 rounded-lg hover:bg-teal-50/60 transition-colors"
           >
             Find Doctors
@@ -195,14 +195,14 @@ export default function Navbar() {
         <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 shadow-md">
           <div className="flex flex-col space-y-3">
             <Link
-              href="/#specialities"
+              href="/specialities"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2 text-base font-medium text-slate-800 hover:bg-slate-50 rounded-lg"
             >
               Find Doctors
             </Link>
             <Link
-              href="/#specialities"
+              href="/specialities"
               onClick={() => setMobileMenuOpen(false)}
               className="px-3 py-2 text-base font-medium text-slate-800 hover:bg-slate-50 rounded-lg"
             >

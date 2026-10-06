@@ -113,3 +113,62 @@ export async function getDoctorById(id: string): Promise<DoctorWithDetails | nul
     throw err;
   }
 }
+
+/**
+ * Retrieves all verified doctors within a specific speciality.
+ * Strictly requires verification_status = 'verified'.
+ * Returns empty array if no verified doctors exist for this speciality.
+ */
+export async function getDoctorsBySpecialityId(
+  specialityId: string
+): Promise<DoctorWithDetails[]> {
+  if (!specialityId) return [];
+
+  try {
+    const { data, error } = await supabase
+      .from("doctors")
+      .select(`
+        id,
+        profile_id,
+        speciality_id,
+        clinic_id,
+        qualification,
+        experience_years,
+        consultation_fee,
+        about,
+        verification_status,
+        created_at,
+        updated_at,
+        profile:profiles(id, full_name, phone, email, location, role),
+        speciality:specialities(id, name, slug, description),
+        clinic:clinics(id, name, address, city, state, pincode, phone, website, latitude, longitude)
+      `)
+      .eq("speciality_id", specialityId)
+      .eq("verification_status", "verified")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.warn(
+        `[getDoctorsBySpecialityId] Query error for speciality ${specialityId}:`,
+        error.message
+      );
+      const fallback = await supabase
+        .from("doctors")
+        .select("id, profile_id, speciality_id, clinic_id, qualification, experience_years, consultation_fee, about, verification_status, created_at, updated_at")
+        .eq("speciality_id", specialityId)
+        .eq("verification_status", "verified")
+        .order("created_at", { ascending: false });
+
+      if (fallback.error) {
+        return [];
+      }
+
+      return (fallback.data as unknown as DoctorWithDetails[]) ?? [];
+    }
+
+    return (data as unknown as DoctorWithDetails[]) ?? [];
+  } catch {
+    return [];
+  }
+}
+

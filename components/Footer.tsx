@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
   return (
     <footer className="bg-slate-900 text-slate-300">
@@ -53,36 +55,36 @@ export default function Footer() {
             </h3>
             <ul className="mt-4 space-y-2.5 text-sm">
               <li>
-                <a
-                  href="#specialities"
+                <Link
+                  href="/specialities"
                   className="hover:text-white transition-colors"
                 >
                   Find Doctors
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#specialities"
+                <Link
+                  href="/specialities"
                   className="hover:text-white transition-colors"
                 >
                   Specialities
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#how-it-works"
+                <Link
+                  href="/#how-it-works"
                   className="hover:text-white transition-colors"
                 >
                   How It Works
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#locations"
+                <Link
+                  href="/#locations"
                   className="hover:text-white transition-colors"
                 >
                   Bhopal Locations
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -94,52 +96,52 @@ export default function Footer() {
             </h3>
             <ul className="mt-4 space-y-2.5 text-sm">
               <li>
-                <a
-                  href="#specialities"
+                <Link
+                  href="/specialities/dermatology"
                   className="hover:text-white transition-colors"
                 >
                   Dermatology
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#specialities"
+                <Link
+                  href="/specialities/ent"
                   className="hover:text-white transition-colors"
                 >
                   ENT
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#specialities"
+                <Link
+                  href="/specialities/dentistry"
                   className="hover:text-white transition-colors"
                 >
                   Dentistry
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#specialities"
+                <Link
+                  href="/specialities/cardiology"
                   className="hover:text-white transition-colors"
                 >
                   Cardiology
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#specialities"
+                <Link
+                  href="/specialities/neurology"
                   className="hover:text-white transition-colors"
                 >
                   Neurology
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#specialities"
+                <Link
+                  href="/specialities/orthopedics"
                   className="hover:text-white transition-colors"
                 >
                   Orthopedics
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

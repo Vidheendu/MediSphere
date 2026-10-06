@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Hero() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-teal-50/50 to-white py-16 sm:py-24 lg:py-28 border-b border-slate-100">
@@ -22,8 +24,8 @@ export default function Hero() {
 
           {/* Hero Buttons */}
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4">
-            <a
-              href="#specialities"
+            <Link
+              href="/specialities"
               className="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-teal-600 px-6 py-3.5 text-base font-semibold text-white shadow-xs hover:bg-teal-700 transition-colors"
             >
               <svg
@@ -41,13 +43,13 @@ export default function Hero() {
                 />
               </svg>
               Find a Doctor
-            </a>
-            <a
-              href="#specialities"
+            </Link>
+            <Link
+              href="/specialities"
               className="w-full sm:w-auto inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-6 py-3.5 text-base font-semibold text-slate-800 shadow-2xs hover:bg-slate-50 transition-colors"
             >
               Explore Specialities
-            </a>
+            </Link>
           </div>
 
           {/* Authentic Core Highlights (No fake stats/ratings) */}
