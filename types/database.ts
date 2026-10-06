@@ -158,7 +158,29 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "doctors_clinic_id_fkey";
+            columns: ["clinic_id"];
+            isOneToOne: false;
+            referencedRelation: "clinics";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "doctors_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "doctors_speciality_id_fkey";
+            columns: ["speciality_id"];
+            isOneToOne: false;
+            referencedRelation: "specialities";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
     Views: {
@@ -180,3 +202,16 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Speciality = Database["public"]["Tables"]["specialities"]["Row"];
 export type Clinic = Database["public"]["Tables"]["clinics"]["Row"];
 export type Doctor = Database["public"]["Tables"]["doctors"]["Row"];
+
+/**
+ * Extended Doctor type populated with relational joins:
+ * - profile: linked Profile row (name, email, phone, location)
+ * - speciality: linked Speciality row (name, slug, description)
+ * - clinic: linked Clinic row (name, address, city, phone)
+ */
+export interface DoctorWithDetails extends Doctor {
+  profile?: Profile | null;
+  speciality?: Speciality | null;
+  clinic?: Clinic | null;
+}
+
