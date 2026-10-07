@@ -25,7 +25,7 @@ export default function Hero() {
           {/* Hero Buttons */}
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4">
             <Link
-              href="/specialities"
+              href="/doctors"
               className="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-teal-600 px-6 py-3.5 text-base font-semibold text-white shadow-xs hover:bg-teal-700 transition-colors"
             >
               <svg
