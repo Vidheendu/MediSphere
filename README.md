@@ -74,4 +74,34 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
   - Reusable patient query service (`getActiveDoctorSchedule(doctorId)`) retrieves only active schedules of verified doctors.
 - **Zero Mock Availability**: Doctors without a configured schedule have no available hours displayed; availability is strictly provider-configured.
 
+## Phase 11 — Appointment Slot Generation
+
+- **Slot Management Route**: `/doctor/slots` (accessible via Doctor Workspace and Schedule Manager).
+- **Database Schema**: Dedicated `appointment_slots` table with foreign key to `doctors(id)`, tracking `slot_date`, `start_time`, `end_time`, and `status` (`available`, `booked`, `blocked`).
+- **Strict Timezone Handling**: All scheduling calculations and date conversions strictly use `Asia/Kolkata` (IST, UTC+05:30). Dates are parsed using UTC noon reference to avoid any one-day shift across machine timezones.
+- **Controlled Generation Range**: Doctors can generate slots on demand for a selected date or across the next 7 days (capped at a maximum of 30 days via `generateDoctorSlots(doctorId, startDate, endDate)`).
+- **Healthcare Slot Generation Logic**:
+  - Derived strictly from the doctor's active recurring weekly schedule (`doctor_schedules`).
+  - Automatically calculates discrete slot windows matching `appointment_duration` (e.g. 15, 20, 30, 45, 60 minutes).
+  - Enforces shift boundaries: slots cannot extend beyond the shift's `end_time`.
+  - Excludes break periods: any slots overlapping `break_start` to `break_end` (e.g., lunch) are completely excluded.
+  - Excludes past slots: historical dates produce 0 slots; for today's date in Asia/Kolkata, slots with start times in the past are automatically skipped.
+- **Idempotency & Duplicate Prevention**:
+  - Database-level unique constraint on `(doctor_id, slot_date, start_time)`.
+  - Batch generation is idempotent: re-running generation never produces duplicate slots and preserves existing `blocked` or `booked` slot states.
+- **Slot Blocking**:
+  - Doctors can selectively block and unblock available slots from `/doctor/slots`.
+  - Blocked slots are preserved in the database for audit history and hidden from patient availability.
+  - Doctors cannot manually mark slots as booked.
+- **Doctor Verification Guard**:
+  - `getAvailableSlots(doctorId, date)` strictly requires `doctors.verification_status = 'verified'` and `status = 'available'`.
+  - Pending imported doctors from Phase 9 remain unbookable until explicitly verified.
+- **Row Level Security (RLS)**:
+  - Public/patients can read only `available` slots belonging to `verified` doctors.
+  - Doctors can read and update (block/unblock) only their own slots (`doctors.profile_id = auth.uid()`).
+  - Doctors cannot modify another doctor's slots or set status to `booked`.
+  - Public users and patients cannot insert, update, or delete slots.
+- **Scope Boundary**: Zero fake appointments, zero fake bookings. Booking workflows, payments, and checkout remain reserved for subsequent phases.
+
+
 

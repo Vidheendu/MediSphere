@@ -260,17 +260,23 @@ export default function DoctorSchedulePage() {
               </span>
             </Link>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 href="/doctor/dashboard"
-                className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 transition-colors"
+                className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 transition-colors"
               >
                 Dashboard
+              </Link>
+              <Link
+                href="/doctor/slots"
+                className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 transition-colors"
+              >
+                View Slots
               </Link>
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 transition-colors"
+                className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 transition-colors"
               >
                 Sign Out
               </button>
