@@ -1,0 +1,41 @@
+[
+  {
+    "name": "Bansal Hospital",
+    "address": "C-Sector, Shahpura",
+    "city": "Bhopal",
+    "state": "Madhya Pradesh",
+    "pincode": "462016",
+    "phone": "+91-0755-4086000",
+    "website": "https://bansalhospital.com",
+    "latitude": null,
+    "longitude": null,
+    "source": "https://bansalhospital.com",
+    "verification_status": "pending"
+  },
+  {
+    "name": "Apollo Sage Hospitals",
+    "address": "E-8 Extension, Bawadiya Kalan",
+    "city": "Bhopal",
+    "state": "Madhya Pradesh",
+    "pincode": "462026",
+    "phone": "0755-4308111",
+    "website": "https://apollosage.in",
+    "latitude": null,
+    "longitude": null,
+    "source": "https://apollosage.in",
+    "verification_status": "pending"
+  },
+  {
+    "name": "AIIMS Bhopal",
+    "address": "Saket Nagar",
+    "city": "Bhopal",
+    "state": "Madhya Pradesh",
+    "pincode": "462020",
+    "phone": "0755-2672317",
+    "website": "https://aiimsbhopal.edu.in",
+    "latitude": null,
+    "longitude": null,
+    "source": "https://aiimsbhopal.edu.in",
+    "verification_status": "pending"
+  }
+]

@@ -9,5 +9,6 @@
   "website": null,
   "latitude": null,
   "longitude": null,
-  "source": "Municipal Healthcare Directory / Official Hospital Registry"
+  "source": "Municipal Healthcare Directory / Official Hospital Registry",
+  "verification_status": "pending"
 }

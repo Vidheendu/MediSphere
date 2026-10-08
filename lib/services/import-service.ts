@@ -36,6 +36,7 @@ export interface RawClinicRecord {
   latitude?: number | null;
   longitude?: number | null;
   source: string;
+  verification_status?: string | null;
 }
 
 export interface ValidationIssue {
@@ -169,6 +170,16 @@ export function validateClinicRecord(record: Partial<RawClinicRecord>): Validati
       errors.push({
         field: "longitude",
         message: "Longitude must be between -180 and 180 or null.",
+      });
+    }
+  }
+
+  if (record.verification_status !== undefined && record.verification_status !== null) {
+    const validStatuses = ["pending", "verified"];
+    if (!validStatuses.includes(record.verification_status)) {
+      errors.push({
+        field: "verification_status",
+        message: "Verification status must be 'pending' or 'verified'.",
       });
     }
   }
@@ -423,3 +434,96 @@ export async function importDoctorRecords(
 
   return summary;
 }
+
+/**
+ * Imports a single verified clinic record.
+ * Checks for duplicates by clinic name and city.
+ * Preserves source provenance.
+ */
+export async function importClinicRecord(
+  record: RawClinicRecord
+): Promise<{ success: boolean; id?: string; error?: string; skippedDuplicate?: boolean }> {
+  const validation = validateClinicRecord(record);
+  if (!validation.valid) {
+    const msg = validation.errors.map((e) => `${e.field}: ${e.message}`).join("; ");
+    return { success: false, error: msg };
+  }
+
+  const trimmedName = record.name.trim();
+  const city = record.city?.trim() || "Bhopal";
+
+  // Check if clinic already exists
+  const { data: existing, error: findError } = await supabase
+    .from("clinics")
+    .select("id")
+    .ilike("name", trimmedName)
+    .ilike("city", city)
+    .maybeSingle();
+
+  if (!findError && existing?.id) {
+    return {
+      success: false,
+      skippedDuplicate: true,
+      error: `Duplicate clinic detected: '${trimmedName}' in '${city}' already exists.`,
+    };
+  }
+
+  const { data: created, error: createError } = await supabase
+    .from("clinics")
+    .insert({
+      name: trimmedName,
+      address: record.address?.trim() || null,
+      city: city,
+      state: record.state?.trim() || "Madhya Pradesh",
+      pincode: record.pincode?.trim() || null,
+      phone: record.phone?.trim() || null,
+      website: record.website?.trim() || null,
+      latitude: record.latitude ?? null,
+      longitude: record.longitude ?? null,
+    })
+    .select("id")
+    .single();
+
+  if (createError) {
+    return { success: false, error: createError.message };
+  }
+
+  return { success: true, id: created.id };
+}
+
+/**
+ * Batch imports an array of verified clinic records.
+ */
+export async function importClinicRecords(
+  records: RawClinicRecord[]
+): Promise<ImportSummary> {
+  const summary: ImportSummary = {
+    total: records.length,
+    imported: 0,
+    skippedDuplicates: 0,
+    failedValidation: 0,
+    errors: [],
+  };
+
+  for (const record of records) {
+    const result = await importClinicRecord(record);
+    if (result.success) {
+      summary.imported++;
+    } else if (result.skippedDuplicate) {
+      summary.skippedDuplicates++;
+      summary.errors.push({
+        identifier: record.name,
+        reason: result.error || "Duplicate skipped",
+      });
+    } else {
+      summary.failedValidation++;
+      summary.errors.push({
+        identifier: record.name,
+        reason: result.error || "Unknown validation error",
+      });
+    }
+  }
+
+  return summary;
+}
+

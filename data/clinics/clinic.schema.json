@@ -48,6 +48,12 @@
       "type": "string",
       "description": "Verifiable public source of the facility information (e.g. Municipal Registry, Hospital Directory). REQUIRED for all imports.",
       "minLength": 5
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": ["pending", "verified"],
+      "default": "pending",
+      "description": "Verification state of the clinic facility. Never automatically verified."
     }
   },
   "additionalProperties": false

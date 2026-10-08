@@ -17,13 +17,41 @@
 
 import fs from "fs";
 import path from "path";
-import {
-  validateDoctorRecord,
-  importDoctorRecords,
-  type RawDoctorRecord,
+import type {
+  RawDoctorRecord,
+  RawClinicRecord,
 } from "../lib/services/import-service";
 
+function loadEnvLocal() {
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) return;
+  const envLocalPath = path.resolve(process.cwd(), ".env.local");
+  if (fs.existsSync(envLocalPath)) {
+    const content = fs.readFileSync(envLocalPath, "utf-8");
+    for (const line of content.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eqIdx = trimmed.indexOf("=");
+      if (eqIdx !== -1) {
+        const key = trimmed.slice(0, eqIdx).trim();
+        const val = trimmed.slice(eqIdx + 1).trim();
+        if (!process.env[key]) {
+          process.env[key] = val;
+        }
+      }
+    }
+  }
+}
+
 async function main() {
+  loadEnvLocal();
+
+  const {
+    validateDoctorRecord,
+    validateClinicRecord,
+    importDoctorRecords,
+    importClinicRecords,
+  } = await import("../lib/services/import-service");
+
   console.log("==================================================");
   console.log("MEDISPHERE — VERIFIED DATA IMPORT TOOL");
   console.log("==================================================");
@@ -32,7 +60,7 @@ async function main() {
   let targetPath = targetArg;
 
   if (!targetPath) {
-    // Look in data/doctors for non-template json files
+    // Look in data/doctors or data/clinics for non-template json files
     const doctorsDir = path.resolve(process.cwd(), "data", "doctors");
     if (fs.existsSync(doctorsDir)) {
       const candidates = fs
@@ -46,17 +74,35 @@ async function main() {
 
       if (candidates.length > 0) {
         targetPath = path.join(doctorsDir, candidates[0]);
-        console.log(`Discovered candidate data file: ${targetPath}`);
+        console.log(`Discovered candidate doctor data file: ${targetPath}`);
+      }
+    }
+
+    if (!targetPath) {
+      const clinicsDir = path.resolve(process.cwd(), "data", "clinics");
+      if (fs.existsSync(clinicsDir)) {
+        const candidates = fs
+          .readdirSync(clinicsDir)
+          .filter(
+            (file) =>
+              file.endsWith(".json") &&
+              !file.includes("template") &&
+              !file.includes("schema")
+          );
+
+        if (candidates.length > 0) {
+          targetPath = path.join(clinicsDir, candidates[0]);
+          console.log(`Discovered candidate clinic data file: ${targetPath}`);
+        }
       }
     }
   }
 
   if (!targetPath || !fs.existsSync(targetPath)) {
     console.log("\n[INFO] No data file provided to import.");
-    console.log("To import verified doctor records:");
-    console.log("  1. Create a JSON file conforming to data/doctors/doctor.schema.json");
-    console.log("  2. Run: npx tsx scripts/import-data.ts <path-to-your-file.json>");
-    console.log("     or: npm run import:data -- <path-to-your-file.json>\n");
+    console.log("To import verified healthcare records:");
+    console.log("  - Doctor records: npx tsx scripts/import-data.ts data/doctors/<file>.json");
+    console.log("  - Clinic records: npx tsx scripts/import-data.ts data/clinics/<file>.json\n");
     console.log("IMPORTANT REMINDER:");
     console.log("  - Only import real, verified public healthcare information.");
     console.log("  - Never guess or fake missing fields (use null instead).");
@@ -66,29 +112,42 @@ async function main() {
 
   console.log(`\nReading records from: ${targetPath}`);
   const rawContent = fs.readFileSync(targetPath, "utf-8");
-  let records: RawDoctorRecord[];
+  let records: Array<Record<string, unknown>>;
 
   try {
-    const parsed = JSON.parse(rawContent);
-    records = Array.isArray(parsed) ? parsed : [parsed];
+    const parsed: unknown = JSON.parse(rawContent);
+    records = Array.isArray(parsed)
+      ? (parsed as Array<Record<string, unknown>>)
+      : [parsed as Record<string, unknown>];
   } catch (err) {
     console.error(`[ERROR] Failed to parse JSON in ${targetPath}:`, err);
     process.exit(1);
   }
 
-  console.log(`Found ${records.length} record(s). Validating records...\n`);
+  const isClinic =
+    targetPath.toLowerCase().includes("clinic") ||
+    (records.length > 0 && !("speciality" in records[0]));
+
+  const recordType = isClinic ? "Clinic" : "Doctor";
+  console.log(`Found ${records.length} ${recordType} record(s). Validating records...\n`);
 
   let validCount = 0;
   let invalidCount = 0;
 
   records.forEach((record, idx) => {
-    const validation = validateDoctorRecord(record);
+    const validation = isClinic
+      ? validateClinicRecord(record as unknown as RawClinicRecord)
+      : validateDoctorRecord(record as unknown as RawDoctorRecord);
+
     if (validation.valid) {
       validCount++;
-      console.log(`✓ [${idx + 1}/${records.length}] Valid: ${record.name} (${record.speciality})`);
+      const detail = isClinic
+        ? `${String(record.name || "")} (${String(record.city || "Bhopal")})`
+        : `${String(record.name || "")} (${String(record.speciality || "")})`;
+      console.log(`✓ [${idx + 1}/${records.length}] Valid: ${detail}`);
     } else {
       invalidCount++;
-      console.log(`✗ [${idx + 1}/${records.length}] Invalid: ${record.name || "Unnamed"}`);
+      console.log(`✗ [${idx + 1}/${records.length}] Invalid: ${String(record.name || "Unnamed")}`);
       validation.errors.forEach((e) => console.log(`    - [${e.field}]: ${e.message}`));
     }
   });
@@ -109,8 +168,10 @@ async function main() {
     process.exit(0);
   }
 
-  console.log("\nExecuting safe batch import into Supabase...");
-  const summary = await importDoctorRecords(records);
+  console.log(`\nExecuting safe batch import into Supabase (${recordType})...`);
+  const summary = isClinic
+    ? await importClinicRecords(records as unknown as RawClinicRecord[])
+    : await importDoctorRecords(records as unknown as RawDoctorRecord[]);
 
   console.log("\n==================================================");
   console.log("IMPORT RESULTS");

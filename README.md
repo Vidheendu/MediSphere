@@ -47,3 +47,14 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
   - **Availability**: Placeholder filter (`Availability — Coming Soon`) for upcoming scheduling release.
   - **Ratings**: Authentic rating badge only displays when legitimate ratings exist in the database.
 - **Components**: Reusable [`DoctorCard`](file:///c:/Users/vidhe/MediSphere/components/doctors/DoctorCard.tsx) and [`DoctorListingClient`](file:///c:/Users/vidhe/MediSphere/components/doctors/DoctorListingClient.tsx).
+
+## Phase 9 — Real Bhopal Doctor and Clinic Data
+
+- **Source-Backed Datasets**: Real medical practitioner and clinic datasets located at `data/doctors/bhopal-doctors.json` and `data/clinics/bhopal-clinics.json`.
+- **Specialities Covered**: Covers all 6 MediSphere specialities in Bhopal, MP (Dermatology, ENT, Dentistry, Cardiology, Neurology, Orthopedics) with 20 verified doctor records and 3 registered healthcare facilities.
+- **Source Provenance**: Every record preserves its original trustworthy public source URL (official hospital/clinic directories such as Bansal Hospital and Apollo Sage Hospitals).
+- **Default Pending Status**: All newly imported records strictly begin with `verification_status = "pending"`. They are never automatically verified.
+- **Admin Verification Required**: Only doctors with `verification_status = "verified"` appear in the public doctor listing (`/doctors`). Admin review is required before publication.
+- **Missing Information Integrity**: Any unverified or unpublished information (e.g. fees, experience) is strictly stored as `null`. No guesswork, mock values, or placeholders.
+- **Duplicate Prevention**: Batch import pipeline verifies uniqueness by doctor name, speciality, and clinic affiliation before queueing.
+
