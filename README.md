@@ -58,3 +58,20 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 - **Missing Information Integrity**: Any unverified or unpublished information (e.g. fees, experience) is strictly stored as `null`. No guesswork, mock values, or placeholders.
 - **Duplicate Prevention**: Batch import pipeline verifies uniqueness by doctor name, speciality, and clinic affiliation before queueing.
 
+## Phase 10 — Doctor Availability and Schedule Management
+
+- **Doctor Schedule Management Route**: `/doctor/schedule` (also accessible via Doctor Workspace at `/doctor/dashboard`).
+- **Database Schema**: Dedicated `doctor_schedules` table with foreign key to `doctors(id)`, tracking `day_of_week`, `start_time`, `end_time`, `break_start`, `break_end`, `appointment_duration`, and `is_active`.
+- **Days of Week**: Full weekly support for Monday through Sunday with unique constraint on `(doctor_id, day_of_week)`.
+- **Healthcare Business Logic**:
+  - Enforces `end_time > start_time`.
+  - Enforces `break_end > break_start` within working hours (`break_start >= start_time` and `break_end <= end_time`).
+  - Enforces `appointment_duration > 0` and within available working duration.
+- **Role-Based Security & RLS**:
+  - Doctors can only view, insert, update, and delete their own schedules.
+  - Doctor A cannot modify Doctor B's schedule.
+  - Patients cannot modify any schedule records.
+  - Reusable patient query service (`getActiveDoctorSchedule(doctorId)`) retrieves only active schedules of verified doctors.
+- **Zero Mock Availability**: Doctors without a configured schedule have no available hours displayed; availability is strictly provider-configured.
+
+

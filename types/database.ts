@@ -182,6 +182,56 @@ export type Database = {
           }
         ];
       };
+      doctor_schedules: {
+        Row: {
+          id: string;
+          doctor_id: string;
+          day_of_week: DayOfWeek;
+          start_time: string;
+          end_time: string;
+          break_start: string | null;
+          break_end: string | null;
+          appointment_duration: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          doctor_id: string;
+          day_of_week: DayOfWeek;
+          start_time: string;
+          end_time: string;
+          break_start?: string | null;
+          break_end?: string | null;
+          appointment_duration?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          doctor_id?: string;
+          day_of_week?: DayOfWeek;
+          start_time?: string;
+          end_time?: string;
+          break_start?: string | null;
+          break_end?: string | null;
+          appointment_duration?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "doctor_schedules_doctor_id_fkey";
+            columns: ["doctor_id"];
+            isOneToOne: false;
+            referencedRelation: "doctors";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -198,10 +248,20 @@ export type Database = {
   };
 };
 
+export type DayOfWeek =
+  | "Monday"
+  | "Tuesday"
+  | "Wednesday"
+  | "Thursday"
+  | "Friday"
+  | "Saturday"
+  | "Sunday";
+
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Speciality = Database["public"]["Tables"]["specialities"]["Row"];
 export type Clinic = Database["public"]["Tables"]["clinics"]["Row"];
 export type Doctor = Database["public"]["Tables"]["doctors"]["Row"];
+export type DoctorSchedule = Database["public"]["Tables"]["doctor_schedules"]["Row"];
 
 /**
  * Extended Doctor type populated with relational joins:
@@ -214,4 +274,5 @@ export interface DoctorWithDetails extends Doctor {
   speciality?: Speciality | null;
   clinic?: Clinic | null;
 }
+
 

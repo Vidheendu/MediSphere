@@ -78,10 +78,16 @@ export default function DoctorDashboardPage() {
 
                 <div className="flex items-center gap-2">
                   <Link
-                    href="/"
+                    href="/doctor/schedule"
                     className="inline-flex items-center justify-center rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 px-4 py-2 text-xs sm:text-sm font-semibold transition-colors"
                   >
-                    View Homepage
+                    Manage Schedule →
+                  </Link>
+                  <Link
+                    href="/"
+                    className="inline-flex items-center justify-center rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300 hover:text-white px-3 py-2 text-xs sm:text-sm font-medium transition-colors"
+                  >
+                    Homepage
                   </Link>
                 </div>
               </div>
@@ -126,7 +132,47 @@ export default function DoctorDashboardPage() {
               </div>
             </div>
 
-            {/* Phase 4 Status Card */}
+            {/* Phase 10: Schedule & Availability Section */}
+            <div className="rounded-xl border border-slate-700 bg-slate-800 p-6 sm:p-7 shadow-md">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-start gap-3.5">
+                  <div className="p-2.5 rounded-xl bg-teal-500/20 text-teal-400 border border-teal-500/30 shrink-0">
+                    <svg
+                      className="h-6 w-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">
+                      Doctor Availability & Consultation Schedule
+                    </h2>
+                    <p className="mt-1 text-xs sm:text-sm text-slate-300 leading-relaxed max-w-xl">
+                      Configure your weekly working days, clinic shift hours, lunch break periods, and appointment slot durations. Only active days are discoverable by patients.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0">
+                  <Link
+                    href="/doctor/schedule"
+                    className="inline-flex items-center justify-center rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 px-4 py-2 text-xs sm:text-sm font-semibold transition-colors w-full sm:w-auto"
+                  >
+                    Open Schedule Manager →
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Provider Foundation Card */}
             <div className="rounded-xl border border-teal-800/80 bg-teal-950/40 p-6">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-teal-500 text-slate-950 shrink-0 mt-0.5">
@@ -145,13 +191,12 @@ export default function DoctorDashboardPage() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-base font-semibold text-teal-200">
-                    Doctor Authentication Foundation Verified
-                  </h2>
+                  <h3 className="text-base font-semibold text-teal-200">
+                    Doctor Identity & Role Verified
+                  </h3>
                   <p className="mt-1 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                    Doctor identity and role checking have been successfully validated.
-                    Doctor profile management, clinic associations, consultation fees,
-                    and appointment slot scheduling will be implemented in subsequent phases.
+                    Doctor portal access is secured via Supabase Role-Based Access Control.
+                    Only authenticated healthcare providers can configure schedules and manage clinic availability.
                   </p>
                 </div>
               </div>
