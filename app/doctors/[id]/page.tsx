@@ -223,14 +223,28 @@ export default async function DoctorProfilePage({ params }: PageProps) {
                 )}
 
                 <div className="mt-5 pt-4 border-t border-slate-100">
-                  <div className="rounded-xl bg-slate-50 border border-dashed border-slate-200 p-3 text-center">
-                    <p className="text-xs font-semibold text-slate-700">
-                      Appointments & Scheduling
-                    </p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Direct patient booking is launching in upcoming phase.
-                    </p>
-                  </div>
+                  <Link
+                    href={`/doctors/${doctor.id}/book`}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-5 py-3 text-sm font-semibold text-white shadow-xs hover:bg-teal-700 transition-colors focus:outline-hidden focus:ring-2 focus:ring-teal-500"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span>Book Appointment</span>
+                  </Link>
+                  <p className="text-[11px] text-center text-slate-500 mt-2">
+                    Instant confirmation • Verified practitioner
+                  </p>
                 </div>
               </div>
 

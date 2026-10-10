@@ -78,10 +78,16 @@ export default function PatientDashboardPage() {
 
                 <div className="flex items-center gap-2">
                   <Link
-                    href="/"
+                    href="/dashboard/appointments"
                     className="inline-flex items-center justify-center rounded-lg bg-teal-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs hover:bg-teal-700 transition-colors"
                   >
-                    Browse Specialities
+                    My Appointments
+                  </Link>
+                  <Link
+                    href="/doctors"
+                    className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    Find Doctors
                   </Link>
                 </div>
               </div>
@@ -126,7 +132,43 @@ export default function PatientDashboardPage() {
               </div>
             </div>
 
-            {/* Phase 4 Status Card */}
+            {/* Appointments Quick Access Card */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-start gap-3.5">
+                  <div className="p-2.5 rounded-xl bg-teal-50 text-teal-600 border border-teal-100 shrink-0 mt-0.5">
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900">
+                      Doctor Appointments & Bookings
+                    </h2>
+                    <p className="mt-1 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                      Book consultations with verified doctors in Bhopal and review your upcoming scheduled appointments.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 sm:shrink-0">
+                  <Link
+                    href="/dashboard/appointments"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs hover:bg-teal-700 transition-colors"
+                  >
+                    <span>View Appointments</span>
+                    <span>→</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Healthcare System Status Card */}
             <div className="rounded-xl border border-teal-200 bg-teal-50/60 p-6">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-teal-600 text-white shrink-0 mt-0.5">
@@ -146,12 +188,11 @@ export default function PatientDashboardPage() {
                 </div>
                 <div>
                   <h2 className="text-base font-semibold text-teal-950">
-                    Phase 4 Authentication Foundation Active
+                    Patient Appointment Booking Active (Phase 12)
                   </h2>
                   <p className="mt-1 text-xs sm:text-sm text-teal-800 leading-relaxed">
-                    Your patient session is active and role validation has been verified
-                    against the Supabase database. Doctor listings, real-time availability slots,
-                    and appointment bookings will be connected in subsequent phases.
+                    Patient appointment scheduling is live with atomic PostgreSQL transaction protection,
+                    real-time slot availability, and database-level double-booking prevention.
                   </p>
                 </div>
               </div>

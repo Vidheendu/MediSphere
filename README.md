@@ -103,5 +103,29 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
   - Public users and patients cannot insert, update, or delete slots.
 - **Scope Boundary**: Zero fake appointments, zero fake bookings. Booking workflows, payments, and checkout remain reserved for subsequent phases.
 
+## Phase 12 — Patient Appointment Booking
+
+- **Patient Booking Route**: `/doctors/[id]/book` (accessible via Doctor Profile "Book Appointment" CTA).
+- **Patient Appointment History**: `/dashboard/appointments` (accessible via Patient Dashboard).
+- **Appointments Table**: Dedicated `public.appointments` table with foreign keys to `profiles(id)`, `doctors(id)`, and `appointment_slots(id)`, tracking `patient_id`, `doctor_id`, `slot_id`, `appointment_date`, `start_time`, `end_time`, `status` (`confirmed`, `cancelled`, `completed`, `no_show`), `reason`, and `notes`.
+- **Atomic Booking Function**: Stored procedure `public.book_appointment(p_slot_id, p_reason, p_notes)` executed with `SECURITY DEFINER` inside a PostgreSQL transaction:
+  - Validates authenticated patient caller using `auth.uid()`.
+  - Acquires row-level exclusive lock on the slot row via `SELECT ... FOR UPDATE` to strictly serialize concurrent requests.
+  - Verifies slot existence, doctor ownership, and `slot.status = 'available'`.
+  - Validates slot date and time against current timestamp in `Asia/Kolkata` (IST) to reject past slots.
+  - Verifies doctor exists and `doctor.verification_status = 'verified'` (pending doctors cannot be booked).
+  - Inserts exactly one appointment with status `confirmed`.
+  - Atomically transitions slot status from `available` to `booked`.
+- **Double-Booking Protection**:
+  - Row-level lock (`FOR UPDATE`) prevents simultaneous execution race conditions.
+  - Database-level uniqueness rule via `CONSTRAINT unique_appointment_slot UNIQUE (slot_id)` guarantees at the engine level that two confirmed appointments can never share a slot.
+  - Attempted concurrent bookings fail cleanly with patient-friendly error messages without raw database error leaks.
+- **Row Level Security (RLS)**:
+  - Patients can only view their own appointments (`patient_id = auth.uid()`).
+  - Doctors can view appointments booked with them (`doctors.profile_id = auth.uid()`).
+  - Direct public inserts are blocked; booking is only permitted through the atomic RPC function.
+  - Patients cannot manually manipulate slot statuses or book blocked/unverified slots.
+
+
 
 
