@@ -126,6 +126,31 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
   - Direct public inserts are blocked; booking is only permitted through the atomic RPC function.
   - Patients cannot manually manipulate slot statuses or book blocked/unverified slots.
 
+## Phase 13 — Patient Dashboard and Appointment History
+
+- **Patient Dashboard Overview (`/dashboard`)**:
+  - Personalized welcome greeting with the patient's verified full name.
+  - Database-driven aggregate counters: Total appointments, Upcoming active appointments, Completed visits, and Cancelled appointments. Zero mock or sample data.
+  - Next upcoming consultation card with practitioner, clinic, and `Asia/Kolkata` time spotlight.
+  - Quick access navigation to Find Doctors, My Appointments, and Profile Settings.
+- **Appointment History (`/dashboard/appointments`)**:
+  - Displays authenticated patient's real appointment records with complete doctor, speciality, clinic, date, time, and status information.
+  - 7 status filter tabs: All, Upcoming, Past, Confirmed, Completed, Cancelled, and No Show.
+  - Real-time client-side search filtering by doctor, speciality, and clinic name.
+  - Friendly empty states for zero total appointments and zero filter matches.
+- **Appointment Details (`/dashboard/appointments/[id]`)**:
+  - Detailed consultation breakdown including doctor credentials, consultation fee, clinic contact and address, appointment timestamp, reason for visit, and notes.
+  - Strict ownership authorization: Enforces that patients can only view their own appointment. Unowned or non-existent appointments safely present a clean not-found screen without data leakage.
+- **Patient Profile (`/dashboard/profile`)**:
+  - Displays patient contact details and registration information.
+  - Allows editing only permitted schema fields (`full_name`, `phone`, `location`) with input validation.
+  - Role immutability: Role cannot be modified to doctor or admin; protected by both client validation and RLS policies.
+- **Patient Dashboard Navigation**:
+  - Shared responsive header (`PatientDashboardNav`) with desktop tabs, mobile horizontal pills, and mobile dropdown navigation.
+  - Quick links for Overview, My Appointments, Find Doctors, My Profile, and Sign Out.
+- **Strict Timezone Handling**:
+  - Upcoming and past appointment evaluations strictly calculated in `Asia/Kolkata` (IST, UTC+05:30). Cancelled appointments excluded from active upcoming consultations.
+
 
 
 
