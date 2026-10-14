@@ -6,3 +6,4 @@ export * from "./schedules";
 export * from "./slots";
 export * from "./appointments";
 export * from "./profiles";
+export { getCurrentDateIST } from "./slots";

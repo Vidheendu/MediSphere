@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { getCurrentDateIST } from "./slots";
 import type { Appointment, AppointmentWithDetails, AppointmentStatus } from "@/types";
 
 export interface BookAppointmentParams {
@@ -459,5 +460,480 @@ export function getAppointmentCounts(appointments: Appointment[]): AppointmentCo
     no_show,
     confirmed,
     past,
+  };
+}
+
+// Re-export getCurrentDateIST for convenience
+export { getCurrentDateIST };
+
+/**
+ * Checks if an appointment is scheduled for today in Asia/Kolkata timezone.
+ */
+export function isAppointmentToday(appt: { appointment_date: string }): boolean {
+  if (!appt?.appointment_date) return false;
+  return appt.appointment_date === getCurrentDateIST();
+}
+
+export interface DoctorAppointmentStats {
+  total: number;
+  today: number;
+  upcomingConfirmed: number;
+  completed: number;
+  cancelled: number;
+  no_show: number;
+}
+
+/**
+ * Calculates doctor dashboard metrics from real database records:
+ * - Total appointments
+ * - Today's appointments (Asia/Kolkata timezone)
+ * - Upcoming confirmed appointments (Asia/Kolkata timezone)
+ * - Completed appointments
+ * - Cancelled appointments
+ */
+export function getDoctorAppointmentStats(appointments: Appointment[]): DoctorAppointmentStats {
+  let today = 0;
+  let upcomingConfirmed = 0;
+  let completed = 0;
+  let cancelled = 0;
+  let no_show = 0;
+
+  const todayStr = getCurrentDateIST();
+
+  for (const appt of appointments) {
+    if (appt.appointment_date === todayStr) {
+      today++;
+    }
+
+    if (appt.status === "confirmed" && isAppointmentUpcoming(appt)) {
+      upcomingConfirmed++;
+    } else if (appt.status === "completed") {
+      completed++;
+    } else if (appt.status === "cancelled") {
+      cancelled++;
+    } else if (appt.status === "no_show") {
+      no_show++;
+    }
+  }
+
+  return {
+    total: appointments.length,
+    today,
+    upcomingConfirmed,
+    completed,
+    cancelled,
+    no_show,
+  };
+}
+
+export type DoctorAppointmentFilter =
+  | "all"
+  | "today"
+  | "upcoming"
+  | "past"
+  | "confirmed"
+  | "completed"
+  | "cancelled"
+  | "no_show";
+
+/**
+ * Filters a doctor's appointments using actual database values and dates.
+ * Strictly calculates upcoming, past, and today in Asia/Kolkata timezone.
+ */
+export function filterDoctorAppointments(
+  appointments: AppointmentWithDetails[],
+  filter: DoctorAppointmentFilter
+): AppointmentWithDetails[] {
+  const todayStr = getCurrentDateIST();
+
+  switch (filter) {
+    case "today":
+      return appointments.filter((a) => a.appointment_date === todayStr);
+    case "upcoming":
+      return appointments.filter((a) => isAppointmentUpcoming(a));
+    case "past":
+      return appointments.filter((a) => isAppointmentPast(a));
+    case "confirmed":
+      return appointments.filter((a) => a.status === "confirmed");
+    case "completed":
+      return appointments.filter((a) => a.status === "completed");
+    case "cancelled":
+      return appointments.filter((a) => a.status === "cancelled");
+    case "no_show":
+      return appointments.filter((a) => a.status === "no_show");
+    case "all":
+    default:
+      return appointments;
+  }
+}
+
+export const DOCTOR_APPOINTMENT_SELECT = `
+  id,
+  patient_id,
+  doctor_id,
+  slot_id,
+  appointment_date,
+  start_time,
+  end_time,
+  status,
+  reason,
+  notes,
+  created_at,
+  updated_at,
+  patient:profiles(
+    id,
+    full_name,
+    email,
+    phone,
+    location
+  ),
+  slot:appointment_slots(
+    id,
+    slot_date,
+    start_time,
+    end_time,
+    status
+  )
+`;
+
+/**
+ * Retrieves appointments belonging strictly to the authenticated doctor's profile.
+ * Does not expose appointments belonging to other doctors.
+ * Only returns patient information authorized for the appointment (no passwords, tokens, or unrelated data).
+ */
+export async function getDoctorAppointments(
+  doctorId?: string
+): Promise<AppointmentWithDetails[]> {
+  try {
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) {
+      return [];
+    }
+
+    const userId = authData.user.id;
+
+    // Resolve doctorId if not provided
+    let targetDoctorId = doctorId;
+    if (!targetDoctorId) {
+      const { data: docData } = await supabase
+        .from("doctors")
+        .select("id")
+        .eq("profile_id", userId)
+        .maybeSingle();
+
+      if (!docData) {
+        return [];
+      }
+      targetDoctorId = docData.id;
+    } else {
+      // Verify doctor record belongs to authenticated user's profile
+      const { data: docCheck } = await supabase
+        .from("doctors")
+        .select("id, profile_id")
+        .eq("id", targetDoctorId)
+        .maybeSingle();
+
+      if (!docCheck || docCheck.profile_id !== userId) {
+        console.warn("[getDoctorAppointments] Unauthorized attempt to query other doctor's appointments");
+        return [];
+      }
+    }
+
+    // Relational query
+    const { data, error } = await supabase
+      .from("appointments")
+      .select(DOCTOR_APPOINTMENT_SELECT)
+      .eq("doctor_id", targetDoctorId)
+      .order("appointment_date", { ascending: false })
+      .order("start_time", { ascending: false });
+
+    if (error) {
+      console.warn("[getDoctorAppointments] Relational select warning, falling back:", error.message);
+      const fallback = await supabase
+        .from("appointments")
+        .select("*")
+        .eq("doctor_id", targetDoctorId)
+        .order("appointment_date", { ascending: false })
+        .order("start_time", { ascending: false });
+
+      if (fallback.error) {
+        console.error("[getDoctorAppointments] Fallback query error:", fallback.error.message);
+        return [];
+      }
+
+      return (fallback.data as unknown as AppointmentWithDetails[]) || [];
+    }
+
+    return (data as unknown as AppointmentWithDetails[]) || [];
+  } catch (err) {
+    console.error("[getDoctorAppointments] Unexpected exception:", err);
+    return [];
+  }
+}
+
+/**
+ * Retrieves a single appointment for a doctor with authorized patient information.
+ * Strictly verifies ownership so a doctor can only view appointments associated with their own doctor profile.
+ * Non-existent or other doctor's appointments return null.
+ */
+export async function getDoctorAppointmentById(
+  appointmentId: string,
+  doctorId?: string
+): Promise<AppointmentWithDetails | null> {
+  if (!appointmentId) return null;
+
+  try {
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) {
+      return null;
+    }
+
+    const userId = authData.user.id;
+
+    // Resolve caller's doctor record
+    let targetDoctorId = doctorId;
+    if (!targetDoctorId) {
+      const { data: docData } = await supabase
+        .from("doctors")
+        .select("id")
+        .eq("profile_id", userId)
+        .maybeSingle();
+
+      if (!docData) return null;
+      targetDoctorId = docData.id;
+    }
+
+    // Query appointment
+    const { data, error } = await supabase
+      .from("appointments")
+      .select(DOCTOR_APPOINTMENT_SELECT)
+      .eq("id", appointmentId)
+      .maybeSingle();
+
+    if (error) {
+      console.warn("[getDoctorAppointmentById] Relational query warning, falling back:", error.message);
+      const fallback = await supabase
+        .from("appointments")
+        .select("*")
+        .eq("id", appointmentId)
+        .maybeSingle();
+
+      if (fallback.error || !fallback.data) return null;
+
+      // Ownership enforcement: must belong to the calling doctor
+      if (fallback.data.doctor_id !== targetDoctorId) {
+        console.warn("[getDoctorAppointmentById] Unauthorized attempt to access appointment:", appointmentId);
+        return null;
+      }
+
+      return fallback.data as unknown as AppointmentWithDetails;
+    }
+
+    if (!data) return null;
+
+    const record = data as unknown as AppointmentWithDetails;
+
+    // Ownership enforcement: must belong to the calling doctor
+    if (record.doctor_id !== targetDoctorId) {
+      console.warn("[getDoctorAppointmentById] Unauthorized attempt to access appointment:", appointmentId);
+      return null;
+    }
+
+    return record;
+  } catch (err) {
+    console.error("[getDoctorAppointmentById] Unexpected error:", err);
+    return null;
+  }
+}
+
+export interface UpdateAppointmentStatusResult {
+  success: boolean;
+  appointment?: Appointment;
+  error?: string;
+  code?: string;
+}
+
+/**
+ * Updates an appointment's status to 'completed' or 'no_show'.
+ *
+ * Enforces:
+ * - Only the doctor associated with the appointment can update status
+ * - Patients cannot perform this doctor-only operation
+ * - Doctors cannot modify another doctor's appointments
+ * - Target status must strictly be 'completed' or 'no_show'
+ * - Cannot mark a future appointment completed or no-show
+ * - Cannot modify a cancelled appointment
+ * - Modifies ONLY the status field; patient, doctor, slot, date, and time fields are preserved
+ * - Preserves existing double-booking protection
+ */
+export async function updateDoctorAppointmentStatus(
+  appointmentId: string,
+  newStatus: "completed" | "no_show",
+  doctorId?: string
+): Promise<UpdateAppointmentStatusResult> {
+  // 1. Validation of target status
+  if (newStatus !== "completed" && newStatus !== "no_show") {
+    return {
+      success: false,
+      error: "Invalid status transition. Doctors can only mark appointments as completed or no-show.",
+      code: "INVALID_STATUS",
+    };
+  }
+
+  // 2. Authentication check
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) {
+    return {
+      success: false,
+      error: "Authentication required to update appointment status.",
+      code: "AUTH_REQUIRED",
+    };
+  }
+
+  const userId = authData.user.id;
+
+  // 3. Resolve caller's doctor record
+  let callerDoctorId = doctorId;
+  if (!callerDoctorId) {
+    const { data: docData } = await supabase
+      .from("doctors")
+      .select("id")
+      .eq("profile_id", userId)
+      .maybeSingle();
+    callerDoctorId = docData?.id;
+  }
+
+  // If user is not a doctor (e.g. patient), reject
+  if (!callerDoctorId) {
+    return {
+      success: false,
+      error: "Access Denied: Only registered healthcare practitioners can update appointment status.",
+      code: "FORBIDDEN",
+    };
+  }
+
+  // 4. Try calling PostgreSQL RPC function first (server-side atomic validation)
+  try {
+    const { data, error } = await supabase.rpc("update_doctor_appointment_status", {
+      p_appointment_id: appointmentId,
+      p_status: newStatus,
+    });
+
+    if (!error && data) {
+      const updatedAppt = (typeof data === "string" ? JSON.parse(data) : data) as Appointment;
+      return {
+        success: true,
+        appointment: updatedAppt,
+      };
+    }
+
+    if (error) {
+      const rawMsg = error.message || "";
+      if (rawMsg.includes("FUTURE_APPOINTMENT")) {
+        return {
+          success: false,
+          error: "Cannot mark a future appointment as completed before its scheduled time.",
+          code: "FUTURE_APPOINTMENT",
+        };
+      }
+      if (rawMsg.includes("INVALID_TRANSITION")) {
+        return {
+          success: false,
+          error: "Cannot modify the status of a cancelled appointment.",
+          code: "INVALID_TRANSITION",
+        };
+      }
+      if (rawMsg.includes("UNAUTHORIZED") || rawMsg.includes("FORBIDDEN")) {
+        return {
+          success: false,
+          error: "You do not have permission to modify this appointment.",
+          code: "UNAUTHORIZED",
+        };
+      }
+      if (rawMsg.includes("APPOINTMENT_NOT_FOUND")) {
+        return {
+          success: false,
+          error: "The requested appointment could not be found.",
+          code: "APPOINTMENT_NOT_FOUND",
+        };
+      }
+    }
+  } catch {
+    // Fall back to direct query validation below
+  }
+
+  // 5. Fallback: Direct database query with strict authorization and verification
+  const { data: existingAppt, error: fetchErr } = await supabase
+    .from("appointments")
+    .select("*")
+    .eq("id", appointmentId)
+    .maybeSingle();
+
+  if (fetchErr || !existingAppt) {
+    return {
+      success: false,
+      error: "The requested appointment could not be found.",
+      code: "APPOINTMENT_NOT_FOUND",
+    };
+  }
+
+  // Verify ownership
+  if (existingAppt.doctor_id !== callerDoctorId) {
+    return {
+      success: false,
+      error: "You do not have permission to modify this appointment.",
+      code: "UNAUTHORIZED",
+    };
+  }
+
+  // Verify not cancelled
+  if (existingAppt.status === "cancelled") {
+    return {
+      success: false,
+      error: "Cannot modify the status of a cancelled appointment.",
+      code: "INVALID_TRANSITION",
+    };
+  }
+
+  // Verify future appointment rule in Asia/Kolkata
+  if (newStatus === "completed" && isAppointmentUpcoming(existingAppt)) {
+    return {
+      success: false,
+      error: "Cannot mark a future appointment as completed before its scheduled time.",
+      code: "FUTURE_APPOINTMENT",
+    };
+  }
+
+  if (newStatus === "no_show" && isAppointmentUpcoming(existingAppt)) {
+    return {
+      success: false,
+      error: "Cannot mark a future appointment as no-show before its scheduled time.",
+      code: "FUTURE_APPOINTMENT",
+    };
+  }
+
+  // 6. Update ONLY the status field and updated_at
+  const { data: updatedData, error: updateErr } = await supabase
+    .from("appointments")
+    .update({
+      status: newStatus,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", appointmentId)
+    .eq("doctor_id", callerDoctorId)
+    .select()
+    .single();
+
+  if (updateErr) {
+    return {
+      success: false,
+      error: "Failed to update appointment status. Please try again.",
+      code: "UPDATE_FAILED",
+    };
+  }
+
+  return {
+    success: true,
+    appointment: updatedData as Appointment,
   };
 }

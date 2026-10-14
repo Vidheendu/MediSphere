@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import DoctorDashboardNav from "@/components/dashboard/DoctorDashboardNav";
 import {
   DAYS_OF_WEEK,
   getOrCreateDoctorForProfile,
@@ -18,8 +18,7 @@ import {
 import type { DayOfWeek, Doctor, DoctorSchedule } from "@/types";
 
 export default function DoctorSchedulePage() {
-  const { profile, signOut } = useAuth();
-  const router = useRouter();
+  const { profile } = useAuth();
 
   // State
   const [doctor, setDoctor] = useState<Doctor | null>(null);
@@ -94,12 +93,6 @@ export default function DoctorSchedulePage() {
       ignore = true;
     };
   }, [profileId]);
-
-  // Sign out handler
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/doctor/login");
-  };
 
   // Open form for a new day or specific day
   const handleOpenAddForm = (initialDay?: DayOfWeek) => {
@@ -236,53 +229,8 @@ export default function DoctorSchedulePage() {
   return (
     <ProtectedRoute allowedRoles={["doctor"]} redirectPath="/doctor/login">
       <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
-        {/* Top Provider Navbar */}
-        <header className="border-b border-slate-800 bg-slate-950/80 shadow-2xs">
-          <div className="mx-auto max-w-7xl px-4 py-3.5 sm:px-6 lg:px-8 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-500 text-slate-950">
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-              </div>
-              <span className="text-xl font-bold tracking-tight text-white">
-                Medi<span className="text-teal-400">Sphere</span>
-              </span>
-            </Link>
-
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Link
-                href="/doctor/dashboard"
-                className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/doctor/slots"
-                className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 transition-colors"
-              >
-                View Slots
-              </Link>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700 hover:bg-slate-800 transition-colors"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </header>
+        {/* Navigation Bar */}
+        <DoctorDashboardNav />
 
         {/* Main Content */}
         <main className="flex-1 py-8 sm:py-10">

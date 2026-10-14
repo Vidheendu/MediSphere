@@ -353,6 +353,13 @@ export type Database = {
         };
         Returns: Json;
       };
+      update_doctor_appointment_status: {
+        Args: {
+          p_appointment_id: string;
+          p_status: string;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       [_ in never]: never;

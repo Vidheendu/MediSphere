@@ -151,6 +151,35 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 - **Strict Timezone Handling**:
   - Upcoming and past appointment evaluations strictly calculated in `Asia/Kolkata` (IST, UTC+05:30). Cancelled appointments excluded from active upcoming consultations.
 
+## Phase 14 — Doctor Dashboard and Patient Appointments
+
+- **Doctor Dashboard Overview (`/doctor/dashboard`)**:
+  - Database-driven aggregate counters strictly computed in `Asia/Kolkata` (IST): Total appointments, Today's appointments, Upcoming confirmed appointments, Completed appointments, and Cancelled appointments. Zero mock or sample metrics.
+  - Today's appointment schedule spotlight with real-time consultation feed and quick access to details.
+  - Practitioner overview card displaying verified credentials and quick workspace navigation.
+- **Doctor Appointment Management (`/doctor/appointments`)**:
+  - Displays appointments belonging strictly to the authenticated practitioner's doctor profile.
+  - Complete consultation card showing formatted appointment ID, patient name, date, time window, status badge, authorized patient contact details (phone, email), and reason for visit.
+  - 8 real-time status filter tabs: All, Today, Upcoming, Past, Confirmed, Completed, Cancelled, and No-Show.
+  - Multi-attribute client search filtering by patient name, phone, email, reason, or appointment ID.
+  - Action controls allowing eligible consultations to be marked as Completed or No-Show.
+- **Appointment Details & Status Transitions (`/doctor/appointments/[id]`)**:
+  - Detailed breakdown of consultation specifics, scheduled slot times, patient contact information, clinical reason, and notes.
+  - Strict ownership authorization: doctors can only open appointments assigned to their own practice; unowned or missing appointments render a safe unauthorized/not-found screen.
+  - Server and database-side validation for status transitions:
+    - Only the doctor associated with the appointment can update status (patients and other doctors strictly rejected).
+    - Status can only transition to `completed` or `no_show`.
+    - Future appointments cannot be marked completed or no-show before their scheduled time in `Asia/Kolkata`.
+    - Cancelled appointments cannot transition to completed or no-show.
+    - Dates, times, patient IDs, doctor IDs, and slot IDs are strictly immutable.
+    - Double-booking protection preserved (slot remains `booked`).
+- **Unified Doctor Navigation (`DoctorDashboardNav`)**:
+  - Shared responsive header with desktop navigation tabs, mobile menu drawer, brand logo, public site toggle, and authenticated sign out.
+  - Integrated across `/doctor/dashboard`, `/doctor/appointments`, `/doctor/appointments/[id]`, `/doctor/schedule`, and `/doctor/slots`.
+- **Database Security & RLS**:
+  - Migration `20261014000000_doctor_appointments.sql` with dedicated RLS policies on `public.profiles` and `public.appointments`.
+  - Atomic PostgreSQL stored procedure `public.update_doctor_appointment_status(p_appointment_id, p_status)`.
+
 
 
 
