@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-context";
 import { getAvailableSlots, getCurrentDateIST } from "@/lib/services/slots";
-import { bookAppointment } from "@/lib/services/appointments";
+import { bookAppointment, type EmailDeliveryStatus } from "@/lib/services/appointments";
 import type { AppointmentSlot, DoctorWithDetails, Appointment } from "@/types";
 
 interface BookingFlowProps {
@@ -70,6 +70,7 @@ export default function BookingFlow({ doctor }: BookingFlowProps) {
   const [bookingInProgress, setBookingInProgress] = useState<boolean>(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [confirmedAppointment, setConfirmedAppointment] = useState<Appointment | null>(null);
+  const [emailDelivery, setEmailDelivery] = useState<EmailDeliveryStatus | null>(null);
 
   const reloadSlots = useCallback(async () => {
     setLoadingSlots(true);
@@ -164,6 +165,9 @@ export default function BookingFlow({ doctor }: BookingFlowProps) {
       }
 
       setConfirmedAppointment(result.appointment);
+      if (result.emailDelivery) {
+        setEmailDelivery(result.emailDelivery);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to book appointment.";
       setBookingError(msg);
@@ -296,6 +300,47 @@ export default function BookingFlow({ doctor }: BookingFlowProps) {
               </div>
             )}
           </div>
+
+          {/* Email Delivery Notification */}
+          {emailDelivery && (
+            <div
+              className={`rounded-2xl p-4 sm:p-5 border flex items-start gap-3.5 transition-all ${
+                emailDelivery.sent
+                  ? "bg-teal-50/80 border-teal-200 text-teal-900"
+                  : emailDelivery.reason === "missing_credentials"
+                  ? "bg-slate-50 border-slate-200 text-slate-800"
+                  : "bg-amber-50/80 border-amber-200 text-amber-900"
+              }`}
+            >
+              <div className="flex-shrink-0 mt-0.5">
+                {emailDelivery.sent ? (
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-white text-xs font-bold shadow-xs">
+                    ✓
+                  </span>
+                ) : (
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-400 text-white text-xs font-bold">
+                    ℹ
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 text-xs sm:text-sm">
+                <div className="font-bold">
+                  {emailDelivery.sent
+                    ? "Confirmation Email Sent"
+                    : emailDelivery.reason === "missing_credentials"
+                    ? "Email Confirmation Not Configured"
+                    : "Email Delivery Notice"}
+                </div>
+                <div className="mt-0.5 opacity-90 leading-relaxed">
+                  {emailDelivery.sent
+                    ? `A confirmation email has been dispatched to your registered address (${user?.email || "account email"}).`
+                    : emailDelivery.reason === "missing_credentials"
+                    ? "Your appointment is confirmed and secured in the database. Automated confirmation emails are currently disabled in this environment."
+                    : "Your appointment is confirmed and secured in the database. However, the confirmation email could not be delivered at this time. You can access your full appointment details anytime from your dashboard."}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Action CTAs */}
           <div className="flex flex-col sm:flex-row gap-3 pt-2">

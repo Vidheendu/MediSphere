@@ -180,6 +180,43 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
   - Migration `20261014000000_doctor_appointments.sql` with dedicated RLS policies on `public.profiles` and `public.appointments`.
   - Atomic PostgreSQL stored procedure `public.update_doctor_appointment_status(p_appointment_id, p_status)`.
 
+## Phase 15 — Email Appointment Confirmation
+
+- **Transactional Email Provider**: Integrated [Resend](https://resend.com) (`resend` SDK) for transactional appointment confirmation emails within MediSphere's existing Next.js server-side architecture.
+- **Required Environment Variables (Server-Only)**:
+  - `RESEND_API_KEY`: Resend API key for dispatching transactional emails (server-only; never exposed to browser or client bundles via `NEXT_PUBLIC_`).
+  - `RESEND_FROM_EMAIL`: Sender email address (e.g. `MediSphere <appointments@medisphere.health>` or `MediSphere <onboarding@resend.dev>`).
+  - `APP_BASE_URL`: Base application URL for generating absolute links in emails (e.g. `http://localhost:3000` or production domain).
+  - Documented in `.env.example` without secrets. The application builds and functions normally even when credentials are not configured.
+- **Email Confirmation Sequence**:
+  1. Patient submits a booking request through the booking interface (`/doctors/[id]/book`).
+  2. Database executes atomic `book_appointment` stored procedure: locks slot row (`SELECT ... FOR UPDATE`), verifies practitioner verification status, creates the appointment record, and marks slot `booked`.
+  3. Server receives the confirmed booking result from PostgreSQL.
+  4. Server sends the confirmation email to the authenticated patient.
+  5. Failed bookings (e.g., slot unavailable, blocked, or expired) never trigger an email.
+- **Email Content & Formatting**:
+  - Professional, responsive HTML email with accessible plain-text alternative.
+  - MediSphere healthcare branding, appointment confirmation header, patient greeting (if available), doctor name, speciality, clinic name & address (when available), appointment date, time window, status, and appointment reference ID.
+  - Date and time windows are strictly evaluated and formatted in `Asia/Kolkata` (IST, UTC+05:30).
+  - Direct deep link to the patient's appointment details page (`/dashboard/appointments/[id]`).
+  - User and database strings are sanitized with HTML entity escaping to prevent injection.
+  - Sensitive medical notes and private consultation reasons are omitted to preserve patient confidentiality.
+- **Recipient Verification & Tenant Isolation**:
+  - Recipient email is derived exclusively from the authenticated patient's account session (`user.email`) or verified profile.
+  - Browser-supplied recipient overrides are rejected.
+  - Cross-tenant security: Users cannot request or trigger confirmation emails for appointments belonging to other patients.
+- **Reliability & Safe Failure Handling**:
+  - Email delivery failures never corrupt or undo booking state.
+  - If email delivery fails (e.g., provider downtime, invalid credentials, rate limits):
+    - The appointment remains confirmed in `public.appointments`.
+    - The slot remains booked in `public.appointment_slots`.
+    - Server logs delivery failures safely without exposing secrets.
+    - Patient sees that their appointment was successfully booked, along with an honest delivery notice.
+- **Duplicate Prevention**:
+  - In-memory idempotency cache prevents duplicate email dispatches from network retries or rapid clicks.
+  - Refreshing the confirmation screen does not resend emails or re-execute bookings.
+
+
 
 
 

@@ -8,11 +8,20 @@ export interface BookAppointmentParams {
   notes?: string;
 }
 
+export interface EmailDeliveryStatus {
+  attempted: boolean;
+  sent: boolean;
+  reason?: "sent" | "missing_credentials" | "provider_error" | "already_sent" | "no_recipient" | "unauthorized";
+  message?: string;
+  messageId?: string;
+}
+
 export interface BookAppointmentResult {
   success: boolean;
   appointment?: Appointment;
   error?: string;
   code?: string;
+  emailDelivery?: EmailDeliveryStatus;
 }
 
 /**
@@ -121,8 +130,41 @@ export async function bookAppointment(
     };
   }
 
+  // 1. In browser runtime, invoke the Next.js server endpoint to keep email provider server-only
+  if (typeof window !== "undefined") {
+    try {
+      const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+      if (sessionErr || !sessionData?.session) {
+        return {
+          success: false,
+          error: "You must be signed in as a patient to book an appointment.",
+          code: "AUTH_REQUIRED",
+        };
+      }
+
+      const token = sessionData.session.access_token;
+      const res = await fetch("/api/appointments/book", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          slotId,
+          reason: reason?.trim() ? reason.trim() : undefined,
+          notes: notes?.trim() ? notes.trim() : undefined,
+        }),
+      });
+
+      const json = await res.json();
+      return json as BookAppointmentResult;
+    } catch (fetchErr) {
+      console.warn("[bookAppointment] Server route invocation failed, falling back to direct RPC:", fetchErr);
+    }
+  }
+
+  // 2. Direct database RPC execution (for server/CLI/testing environment)
   try {
-    // 1. Verify user session
     const { data: authData, error: authError } = await supabase.auth.getUser();
     if (authError || !authData.user) {
       return {
@@ -132,7 +174,6 @@ export async function bookAppointment(
       };
     }
 
-    // 2. Call atomic RPC book_appointment
     const { data, error } = await supabase.rpc("book_appointment", {
       p_slot_id: slotId,
       p_reason: reason?.trim() ? reason.trim() : null,
@@ -156,7 +197,6 @@ export async function bookAppointment(
       };
     }
 
-    // The RPC returns JSON representation of the created appointment row
     const appointmentRow = (typeof data === "string" ? JSON.parse(data) : data) as Appointment;
 
     return {
