@@ -340,10 +340,77 @@ export type Database = {
           }
         ];
       };
+      doctor_reviews: {
+        Row: {
+          id: string;
+          doctor_id: string;
+          patient_id: string;
+          appointment_id: string;
+          rating: number;
+          review_text: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          doctor_id: string;
+          patient_id: string;
+          appointment_id: string;
+          rating: number;
+          review_text?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          doctor_id?: string;
+          patient_id?: string;
+          appointment_id?: string;
+          rating?: number;
+          review_text?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "doctor_reviews_appointment_id_fkey";
+            columns: ["appointment_id"];
+            isOneToOne: true;
+            referencedRelation: "appointments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "doctor_reviews_doctor_id_fkey";
+            columns: ["doctor_id"];
+            isOneToOne: false;
+            referencedRelation: "doctors";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "doctor_reviews_patient_id_fkey";
+            columns: ["patient_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
     };
     Views: {
-      [_ in never]: never;
+      doctor_public_reviews: {
+        Row: {
+          id: string;
+          doctor_id: string;
+          rating: number;
+          review_text: string | null;
+          created_at: string;
+          updated_at: string;
+          patient_display_name: string;
+        };
+        Relationships: [];
+      };
     };
+
     Functions: {
       book_appointment: {
         Args: {
@@ -357,6 +424,20 @@ export type Database = {
         Args: {
           p_appointment_id: string;
           p_status: string;
+        };
+        Returns: Json;
+      };
+      submit_doctor_review: {
+        Args: {
+          p_appointment_id: string;
+          p_rating: number;
+          p_review_text?: string | null;
+        };
+        Returns: Json;
+      };
+      get_doctor_rating_stats: {
+        Args: {
+          p_doctor_id: string;
         };
         Returns: Json;
       };
@@ -394,6 +475,52 @@ export type Doctor = Database["public"]["Tables"]["doctors"]["Row"];
 export type DoctorSchedule = Database["public"]["Tables"]["doctor_schedules"]["Row"];
 export type AppointmentSlot = Database["public"]["Tables"]["appointment_slots"]["Row"];
 export type Appointment = Database["public"]["Tables"]["appointments"]["Row"];
+export type DoctorReview = Database["public"]["Tables"]["doctor_reviews"]["Row"];
+
+/**
+ * Privacy-safe public review projection:
+ * Strictly excludes patient email, phone, authentication IDs, and appointment notes.
+ */
+export interface PublicDoctorReview {
+  id: string;
+  doctor_id: string;
+  rating: number;
+  review_text: string | null;
+  created_at: string;
+  patient_display_name: string;
+}
+
+/**
+ * Aggregated rating statistics computed from verified MediSphere reviews.
+ */
+export interface DoctorRatingStats {
+  averageRating: number | null;
+  totalReviews: number;
+  distribution: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
+}
+
+/**
+ * Review eligibility evaluation for a given appointment
+ */
+export type ReviewEligibilityStatus =
+  | "eligible"
+  | "already_reviewed"
+  | "not_completed"
+  | "not_patient"
+  | "unauthenticated";
+
+export interface ReviewEligibilityResult {
+  status: ReviewEligibilityStatus;
+  eligible: boolean;
+  message: string;
+  existingReview?: DoctorReview | null;
+}
 
 /**
  * Extended Doctor type populated with relational joins:
@@ -418,6 +545,7 @@ export interface AppointmentWithDetails extends Appointment {
   patient?: Profile | null;
   slot?: AppointmentSlot | null;
 }
+
 
 
 

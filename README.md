@@ -216,6 +216,30 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
   - In-memory idempotency cache prevents duplicate email dispatches from network retries or rapid clicks.
   - Refreshing the confirmation screen does not resend emails or re-execute bookings.
 
+## Phase 16 — Doctor Reviews and Ratings
+
+- **Doctor Reviews Route & Details Page**: Integrated review submission into the patient appointment details page (`/dashboard/appointments/[id]`) and public reviews list into the doctor profile (`/doctors/[id]`) and doctor dashboard (`/doctor/dashboard`).
+- **Review Eligibility**:
+  - A patient may review a doctor only when authenticated and submitting a review for their own appointment.
+  - The appointment must belong to the doctor being reviewed.
+  - The appointment status must strictly be `completed` (cancelled, confirmed, and no-show appointments are rejected).
+  - Validation is enforced at both the database and server levels (via unique constraints, RLS, and triggers).
+- **One Review per Appointment (Duplicate Prevention)**:
+  - Database-level `UNIQUE (appointment_id)` constraint prevents multiple reviews for the same appointment, even across multiple browser tabs or direct API calls.
+  - Duplicate submissions receive a friendly error message without corrupting records.
+- **Rating Range & Content**:
+  - Rating must strictly be an integer from 1 to 5 stars (`CHECK (rating >= 1 AND rating <= 5)`).
+  - Review text is optional with a reasonable limit of 1000 characters (`CHECK (length(review_text) <= 1000)`).
+  - Immuntable fields: Patient ID, Doctor ID, and Appointment ID cannot be altered after submission.
+- **Public Review Privacy Rules**:
+  - Public users and practitioners may read published reviews and aggregate ratings.
+  - Public queries strictly omit patient email, phone number, authentication IDs, private profile fields, and appointment notes.
+  - Reviews display only a sanitized reviewer display name (first name or "Verified Patient") alongside verified consultation badges.
+- **Authentic Rating Calculations**:
+  - Average ratings and review counts are calculated strictly from real MediSphere reviews in the database.
+  - Zero reviews are handled safely by displaying "No patient reviews yet" with no fabricated default ratings (e.g., 5.0). External directory ratings are never imported.
+
+
 
 
 

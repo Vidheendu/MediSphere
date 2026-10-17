@@ -14,13 +14,21 @@ import {
   formatAppointmentTimeIST,
   type DoctorAppointmentStats,
 } from "@/lib/services/appointments";
-import type { AppointmentWithDetails, Doctor } from "@/types";
+import { getDoctorReviews, getDoctorRatingStats } from "@/lib/services/reviews";
+import DoctorReviewsList from "@/components/reviews/DoctorReviewsList";
+import type { AppointmentWithDetails, Doctor, PublicDoctorReview, DoctorRatingStats } from "@/types";
 
 export default function DoctorDashboardPage() {
   const { profile } = useAuth();
 
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
+  const [reviews, setReviews] = useState<PublicDoctorReview[]>([]);
+  const [ratingStats, setRatingStats] = useState<DoctorRatingStats>({
+    averageRating: null,
+    totalReviews: 0,
+    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+  });
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -36,11 +44,23 @@ export default function DoctorDashboardPage() {
       setDoctor(doc);
 
       if (doc?.id) {
-        // 2. Fetch real appointments belonging strictly to this doctor
-        const appts = await getDoctorAppointments(doc.id);
+        // 2. Fetch real appointments and reviews belonging strictly to this doctor
+        const [appts, revs, rStats] = await Promise.all([
+          getDoctorAppointments(doc.id),
+          getDoctorReviews(doc.id),
+          getDoctorRatingStats(doc.id),
+        ]);
         setAppointments(appts);
+        setReviews(revs);
+        setRatingStats(rStats);
       } else {
         setAppointments([]);
+        setReviews([]);
+        setRatingStats({
+          averageRating: null,
+          totalReviews: 0,
+          distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+        });
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to load doctor dashboard data.";
@@ -61,9 +81,15 @@ export default function DoctorDashboardPage() {
         setDoctor(doc);
 
         if (doc?.id) {
-          const appts = await getDoctorAppointments(doc.id);
+          const [appts, revs, rStats] = await Promise.all([
+            getDoctorAppointments(doc.id),
+            getDoctorReviews(doc.id),
+            getDoctorRatingStats(doc.id),
+          ]);
           if (!ignore) {
             setAppointments(appts);
+            setReviews(revs);
+            setRatingStats(rStats);
           }
         }
       } catch (err: unknown) {
@@ -84,6 +110,7 @@ export default function DoctorDashboardPage() {
       ignore = true;
     };
   }, [profileId]);
+
 
   // Calculate real metrics from database records strictly using Asia/Kolkata
   const stats: DoctorAppointmentStats = getDoctorAppointmentStats(appointments);
@@ -219,8 +246,8 @@ export default function DoctorDashboardPage() {
               </div>
 
               {loading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {[...Array(5)].map((_, i) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {[...Array(6)].map((_, i) => (
                     <div
                       key={i}
                       className="h-28 rounded-xl bg-slate-800/60 border border-slate-700/60 animate-pulse"
@@ -228,7 +255,7 @@ export default function DoctorDashboardPage() {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                   {/* Total Appointments */}
                   <div className="rounded-xl border border-slate-700 bg-slate-800/80 p-5 shadow-sm hover:border-slate-600 transition-colors">
                     <div className="flex items-center justify-between">
@@ -353,8 +380,31 @@ export default function DoctorDashboardPage() {
                       Patient cancellations
                     </span>
                   </div>
+
+                  {/* Average Rating (Phase 16) */}
+                  <div className="rounded-xl border border-amber-800/60 bg-amber-950/20 p-5 shadow-sm hover:border-amber-700 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider">
+                        Rating
+                      </span>
+                      <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
+                        <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <span className="mt-3 block text-3xl font-extrabold text-amber-300">
+                      {ratingStats.averageRating !== null ? `${ratingStats.averageRating.toFixed(1)} ★` : "—"}
+                    </span>
+                    <span className="mt-1 block text-[11px] text-amber-400/80">
+                      {ratingStats.totalReviews > 0
+                        ? `${ratingStats.totalReviews} verified ${ratingStats.totalReviews === 1 ? "review" : "reviews"}`
+                        : "No reviews yet"}
+                    </span>
+                  </div>
                 </div>
               )}
+
             </div>
 
             {/* Today's Schedule Spotlight */}
@@ -580,8 +630,18 @@ export default function DoctorDashboardPage() {
                 </div>
               </div>
             </div>
+
+            {/* Doctor Reviews and Ratings Section (Phase 16) */}
+            <DoctorReviewsList
+              reviews={reviews}
+              stats={ratingStats}
+              theme="dark"
+              title="Patient Reviews & Ratings"
+              emptyMessage="No patient reviews yet."
+            />
           </div>
         </main>
+
       </div>
     </ProtectedRoute>
   );

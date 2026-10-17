@@ -12,7 +12,10 @@ import {
   formatAppointmentTimeIST,
   isAppointmentUpcoming,
 } from "@/lib/services/appointments";
-import type { AppointmentWithDetails, AppointmentStatus } from "@/types";
+import { getReviewForAppointment } from "@/lib/services/reviews";
+import AppointmentReviewForm from "@/components/reviews/AppointmentReviewForm";
+import type { AppointmentWithDetails, AppointmentStatus, DoctorReview } from "@/types";
+
 
 function formatStatusBadge(status: AppointmentStatus) {
   switch (status) {
@@ -59,6 +62,7 @@ export default function AppointmentDetailsPage() {
   const { user } = useAuth();
 
   const [appointment, setAppointment] = useState<AppointmentWithDetails | null>(null);
+  const [existingReview, setExistingReview] = useState<DoctorReview | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,9 +72,13 @@ export default function AppointmentDetailsPage() {
 
     async function fetchAppointment() {
       try {
-        const data = await getAppointmentById(appointmentId);
+        const [apptData, revData] = await Promise.all([
+          getAppointmentById(appointmentId),
+          getReviewForAppointment(appointmentId),
+        ]);
         if (!ignore) {
-          setAppointment(data);
+          setAppointment(apptData);
+          setExistingReview(revData);
           setLoading(false);
         }
       } catch (err) {
@@ -88,6 +96,7 @@ export default function AppointmentDetailsPage() {
       ignore = true;
     };
   }, [user, appointmentId]);
+
 
   return (
     <ProtectedRoute allowedRoles={["patient"]} redirectPath="/login">
@@ -391,8 +400,16 @@ export default function AppointmentDetailsPage() {
                   </div>
                 )}
 
+                {/* Doctor Review and Rating Section (Phase 16) */}
+                <AppointmentReviewForm
+                  appointment={appointment}
+                  initialReview={existingReview}
+                  onReviewSubmitted={(newReview) => setExistingReview(newReview)}
+                />
+
                 {/* Bottom Actions Bar */}
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+
                   <Link
                     href="/dashboard/appointments"
                     className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
