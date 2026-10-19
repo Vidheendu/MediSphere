@@ -532,6 +532,7 @@ export interface DoctorWithDetails extends Doctor {
   profile?: Profile | null;
   speciality?: Speciality | null;
   clinic?: Clinic | null;
+  distanceKm?: number | null;
 }
 
 /**

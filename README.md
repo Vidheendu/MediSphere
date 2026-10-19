@@ -239,6 +239,32 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
   - Average ratings and review counts are calculated strictly from real MediSphere reviews in the database.
   - Zero reviews are handled safely by displaying "No patient reviews yet" with no fabricated default ratings (e.g., 5.0). External directory ratings are never imported.
 
+## Phase 17 — Location and Maps Integration
+
+- **Map Provider**: Google Maps JavaScript API (selected for simplicity, standard mobile directions support in India, and zero heavy WASM/WebGL bundle overhead).
+- **Environment Variable**:
+  - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`: Client-safe publishable Google Maps JavaScript API key.
+  - Documented as a placeholder in `.env.example`.
+- **How to Configure the Map**:
+  1. Obtain a publishable Google Maps API key from the [Google Cloud Console](https://console.cloud.google.com/google/maps-apis) with the **Maps JavaScript API** enabled.
+  2. Restrict the key by HTTP referrers (e.g. `localhost:3000/*` and your production domain).
+  3. Add the key to `.env.local`:
+     ```env
+     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+     ```
+  4. If the API key is not configured, MediSphere gracefully renders a clean fallback view displaying verified clinic cards, authentic coordinates, addresses, and external directions links without crashing.
+- **Location Permission Behavior**:
+  - **Strictly Optional & On-Demand**: MediSphere never requests browser location automatically on page load. Location is requested only when the patient clicks "Find Near Me".
+  - **Explicit Disclosure**: Explains why location is needed before or during the permission prompt.
+  - **Local-Only Coordinates**: Coordinates are kept strictly in transient client-side component state during the active browser session. They are never written to PostgreSQL database tables, never saved to localStorage, and never transmitted to doctors or third parties.
+  - **Non-blocking Rejection**: If the user declines location permission, the rest of the application functions completely; patients can continue discovering clinics and doctors using city, locality, and clinic filters.
+- **Clinic Coordinate & Direction Integrity**:
+  - Display markers only for clinics with verified institutional coordinates (Bansal Hospital: `23.1994, 77.4197`, Apollo Sage Hospitals: `23.1773, 77.4422`, AIIMS Bhopal: `23.2106, 77.4574`).
+  - Missing coordinates never produce fake or guessed map markers; they display physical addresses as text.
+  - Directions links navigate directly to verified destinations via authentic Google Maps directions URLs.
+  - Proximity distance calculations use the Haversine formula and display authentic distances only when both user and clinic coordinates are verified.
+
+
 
 
 

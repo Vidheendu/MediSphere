@@ -6,6 +6,8 @@ import Footer from "@/components/Footer";
 import { getDoctorById } from "@/lib/services/doctors";
 import { getDoctorReviews, getDoctorRatingStats } from "@/lib/services/reviews";
 import DoctorReviewsList from "@/components/reviews/DoctorReviewsList";
+import { ClinicMap } from "@/components/maps";
+import { isValidCoordinate, getGoogleMapsDirectionsUrl } from "@/lib/maps";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -269,12 +271,18 @@ export default async function DoctorProfilePage({ params }: PageProps) {
                 </div>
               </div>
 
-              {/* Clinic Information */}
+              {/* Clinic Information (Phase 17 Location & Maps Integration) */}
               {doctor.clinic && (
-                <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs space-y-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Clinic & Hospital Location
-                  </h3>
+                <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Clinic & Hospital Location
+                    </h3>
+                    <span className="text-[10px] font-semibold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                      Verified Address
+                    </span>
+                  </div>
+
                   <div>
                     <h4 className="text-base font-bold text-slate-900">
                       {doctor.clinic.name}
@@ -288,6 +296,47 @@ export default async function DoctorProfilePage({ params }: PageProps) {
                       {doctor.clinic.city || "Bhopal"}, {doctor.clinic.state || "Madhya Pradesh"}{" "}
                       {doctor.clinic.pincode ? `- ${doctor.clinic.pincode}` : ""}
                     </p>
+                  </div>
+
+                  {/* Embedded Clinic Map (strictly only rendered when authentic coordinates exist) */}
+                  {doctor.clinic.latitude !== null &&
+                  doctor.clinic.latitude !== undefined &&
+                  doctor.clinic.longitude !== null &&
+                  doctor.clinic.longitude !== undefined &&
+                  isValidCoordinate(doctor.clinic.latitude, doctor.clinic.longitude) ? (
+                    <div className="space-y-2">
+                      <div className="rounded-2xl overflow-hidden border border-slate-200">
+                        <ClinicMap
+                          clinics={[doctor.clinic]}
+                          height="200px"
+                          interactive={false}
+                          showLocationPrompt={false}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
+                        <span>GPS Coordinates</span>
+                        <span className="font-mono">
+                          {Number(doctor.clinic.latitude).toFixed(4)}, {Number(doctor.clinic.longitude).toFixed(4)}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-center text-xs text-slate-500">
+                      Map marker omitted: Coordinates pending official geolocation verification.
+                    </div>
+                  )}
+
+                  {/* Directions Action Link */}
+                  <div>
+                    <a
+                      href={getGoogleMapsDirectionsUrl(doctor.clinic)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-teal-50 border border-teal-200 px-4 py-2.5 text-xs font-semibold text-teal-800 hover:bg-teal-100 hover:border-teal-300 transition-colors shadow-2xs"
+                    >
+                      <span>🧭 Get Directions on Google Maps</span>
+                      <span>↗</span>
+                    </a>
                   </div>
 
                   {doctor.clinic.phone && (

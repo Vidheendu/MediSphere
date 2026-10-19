@@ -142,32 +142,49 @@ export default function DoctorCard({
         )}
 
         {/* Practice Details Grid (Experience, Clinic, Location) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
-          {/* Experience Years */}
-          {doctor.experience_years !== null &&
-            doctor.experience_years !== undefined &&
-            doctor.experience_years >= 0 && (
+        {/* Practice Details Grid (Experience, Clinic, Location & Distance) */}
+        <div className="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {/* Experience Years */}
+            {doctor.experience_years !== null &&
+              doctor.experience_years !== undefined &&
+              doctor.experience_years >= 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-400">🕒</span>
+                  <span className="font-semibold text-slate-800">
+                    {doctor.experience_years} {doctor.experience_years === 1 ? "year" : "years"}
+                  </span>
+                  <span className="text-slate-500">experience</span>
+                </div>
+              )}
+
+            {/* Verified Distance (strictly displayed only when both user and clinic coordinates are authentic) */}
+            {typeof doctor.distanceKm === "number" && !Number.isNaN(doctor.distanceKm) && (
               <div className="flex items-center gap-1.5">
-                <span className="text-slate-400">🕒</span>
-                <span className="font-semibold text-slate-800">
-                  {doctor.experience_years} {doctor.experience_years === 1 ? "year" : "years"}
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                  <span>📍</span>
+                  <span>{doctor.distanceKm < 1 ? `${Math.round(doctor.distanceKm * 1000)}m away` : `${doctor.distanceKm.toFixed(1)} km away`}</span>
                 </span>
-                <span className="text-slate-500">experience</span>
               </div>
             )}
+          </div>
 
-          {/* Clinic Name */}
+          {/* Clinic & Address Display */}
           {doctor.clinic?.name && (
-            <div className="flex items-center gap-1.5 truncate">
-              <span className="text-slate-400">🏥</span>
-              <span className="font-medium text-slate-700 truncate" title={doctor.clinic.name}>
-                {doctor.clinic.name}
-              </span>
+            <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 space-y-0.5">
+              <div className="flex items-center gap-1.5 text-slate-800 font-semibold truncate" title={doctor.clinic.name}>
+                <span>🏥</span>
+                <span className="truncate">{doctor.clinic.name}</span>
+              </div>
+              {doctor.clinic.address && (
+                <div className="text-[11px] text-slate-500 pl-5 truncate" title={`${doctor.clinic.address}, ${doctor.clinic.city || "Bhopal"}`}>
+                  {doctor.clinic.address}, {doctor.clinic.city || "Bhopal"}
+                </div>
+              )}
             </div>
           )}
 
-          {/* Location / City */}
-          {locationString && (
+          {!doctor.clinic?.name && locationString && (
             <div className="flex items-center gap-1.5 truncate">
               <span className="text-slate-400">📍</span>
               <span className="text-slate-600 truncate" title={locationString}>

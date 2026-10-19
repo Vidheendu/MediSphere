@@ -1,13 +1,16 @@
 import { supabase } from "@/lib/supabase";
 import type { DoctorWithDetails } from "@/types";
+import { calculateHaversineDistance, isValidCoordinate } from "@/lib/maps";
 
 export interface DoctorFilterOptions {
   search?: string;
   specialitySlug?: string;
   specialityId?: string;
   city?: string;
+  clinicId?: string;
+  userCoordinates?: { lat: number; lng: number } | null;
   feeRange?: "under-500" | "500-1000" | "1000-plus" | "all";
-  sortBy?: "relevance" | "experience" | "fee_asc" | "fee_desc" | "name";
+  sortBy?: "relevance" | "experience" | "fee_asc" | "fee_desc" | "name" | "distance";
 }
 
 /**
@@ -181,6 +184,11 @@ export async function searchVerifiedDoctors(
       query = query.eq("speciality_id", filters.specialityId);
     }
 
+    // Database-level filtering for clinic ID if supplied
+    if (filters.clinicId && filters.clinicId !== "all") {
+      query = query.eq("clinic_id", filters.clinicId);
+    }
+
     // Database-level fee filtering (only applies if consultation_fee exists)
     if (filters.feeRange && filters.feeRange !== "all") {
       if (filters.feeRange === "under-500") {
@@ -214,7 +222,7 @@ export async function searchVerifiedDoctors(
       list = (data as unknown as DoctorWithDetails[]) ?? [];
     }
 
-    // Secondary relational filters (speciality slug, city, search terms)
+    // Secondary relational filters (speciality slug, clinic ID fallback, city, search terms)
     if (filters.specialitySlug && filters.specialitySlug !== "all") {
       const targetSlug = filters.specialitySlug.toLowerCase().trim();
       list = list.filter((doc) => {
@@ -222,6 +230,10 @@ export async function searchVerifiedDoctors(
         const name = doc.speciality?.name?.toLowerCase();
         return slug === targetSlug || name === targetSlug;
       });
+    }
+
+    if (filters.clinicId && filters.clinicId !== "all") {
+      list = list.filter((doc) => doc.clinic_id === filters.clinicId);
     }
 
     if (filters.city && filters.city !== "all") {
@@ -256,9 +268,45 @@ export async function searchVerifiedDoctors(
       });
     }
 
+    // Authentic proximity distance calculation: strictly only if user coordinates and clinic coordinates are verified
+    if (
+      filters.userCoordinates &&
+      isValidCoordinate(filters.userCoordinates.lat, filters.userCoordinates.lng)
+    ) {
+      list = list.map((doc) => {
+        if (
+          doc.clinic?.latitude !== null &&
+          doc.clinic?.latitude !== undefined &&
+          doc.clinic?.longitude !== null &&
+          doc.clinic?.longitude !== undefined &&
+          isValidCoordinate(doc.clinic.latitude, doc.clinic.longitude)
+        ) {
+          const dist = calculateHaversineDistance(filters.userCoordinates, {
+            lat: doc.clinic.latitude,
+            lng: doc.clinic.longitude,
+          });
+          return { ...doc, distanceKm: dist };
+        }
+        return { ...doc, distanceKm: null };
+      });
+    }
+
     // Sorting
     if (filters.sortBy) {
-      if (filters.sortBy === "experience") {
+      if (filters.sortBy === "distance" && filters.userCoordinates) {
+        list.sort((a, b) => {
+          if (a.distanceKm !== null && a.distanceKm !== undefined && (b.distanceKm === null || b.distanceKm === undefined)) {
+            return -1;
+          }
+          if ((a.distanceKm === null || a.distanceKm === undefined) && b.distanceKm !== null && b.distanceKm !== undefined) {
+            return 1;
+          }
+          if (a.distanceKm !== null && a.distanceKm !== undefined && b.distanceKm !== null && b.distanceKm !== undefined) {
+            return a.distanceKm - b.distanceKm;
+          }
+          return 0;
+        });
+      } else if (filters.sortBy === "experience") {
         list.sort((a, b) => (b.experience_years ?? 0) - (a.experience_years ?? 0));
       } else if (filters.sortBy === "fee_asc") {
         list.sort((a, b) => (a.consultation_fee ?? Infinity) - (b.consultation_fee ?? Infinity));
