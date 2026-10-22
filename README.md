@@ -264,9 +264,29 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
   - Directions links navigate directly to verified destinations via authentic Google Maps directions URLs.
   - Proximity distance calculations use the Haversine formula and display authentic distances only when both user and clinic coordinates are verified.
 
+## Phase 18 — 3D Speciality Discovery Experience
 
-
-
-
-
-
+- **Interactive 3D Healthcare Discovery**: Transforms the homepage medical specialities section into a futuristic, dark navy holographic spatial scene (`#070d18`) with cyan/blue luminescent accents and glassmorphic HUD controls.
+- **Dependencies Added**:
+  - `three` (`^0.186.1`): WebGL 3D graphics rendering engine.
+  - `@types/three` (`^0.186.0`): Complete TypeScript definitions for Three.js.
+  - `@react-three/fiber` (`^9.8.2`): React 19-native declarative Three.js reconciler.
+  - `@react-three/drei` (`^10.7.9`): Helpers, OrbitControls, Float, and spatial HTML overlays.
+- **Six Procedural Medical Sculptures**:
+  - 100% lightweight procedural Three.js geometry — zero unlicensed third-party assets, zero external mesh network overhead.
+  - **Cardiology**: Procedural 3D anatomical heart with aorta arch, coronary vessels, and rhythmic heartbeat systole/diastole pulse.
+  - **Neurology**: Dual hemisphere neural cortex with 12 synaptic node beacons and rotating orbital signal rings.
+  - **Orthopedics**: Articulated vertebral column with 4 stacked vertebrae, cyan intervertebral discs, and breathing sway.
+  - **Dentistry**: Pearlescent molar crown with 4 occlusal cusps, cervical neck, dual tapered roots, and protective halo.
+  - **ENT**: Auditory cochlea logarithmic spiral, tympanic canal, and concentric sonic resonance frequency wave arcs.
+  - **Dermatology**: Layered hexagonal cellular lattice shield symbolizing the epidermal barrier with bio-luminescent strata.
+- **Interactive Capabilities**:
+  - Intuitive OrbitControls (damping enabled, rotation limits, auto-rotation with user pause toggle).
+  - Hover / click node inspection with dynamic scale lerping and lighting glow.
+  - Interactive HUD Inspector Card with clinical focus areas, quick jump selector rail, and direct link to existing `/specialities/[slug]` routes.
+- **Accessibility & Resiliency**:
+  - **Accessible 2D Grid Mode**: High-contrast, dark navy glassmorphic grid mode available via instant toolbar toggle.
+  - **Mobile Ergonomics**: Defaults to clean 2D layout on mobile devices while allowing users to opt into 3D.
+  - **Screen Reader Support**: Hidden and focus-revealed keyboard navigation rail with direct links to all 6 specialities.
+  - **Reduced Motion Support**: Detects `prefers-reduced-motion` at OS level, pausing orbital rotation and model oscillations.
+  - **WebGL Error Safeguard**: Built-in `WebGLErrorBoundary` and client-side `detectWebGL()` gracefully fall back to 2D view if hardware acceleration is unavailable.
