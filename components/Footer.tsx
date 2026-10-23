@@ -149,37 +149,48 @@ export default function Footer() {
           {/* For Doctors / Portals */}
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
-              For Providers
+              Portals & Help
             </h3>
             <ul className="mt-4 space-y-2.5 text-sm">
               <li>
-                <button
-                  type="button"
+                <Link
+                  href="/doctor/login"
                   className="text-teal-400 hover:text-teal-300 font-medium transition-colors"
                 >
-                  Doctor Login
-                </button>
+                  Doctor Portal Login
+                </Link>
               </li>
               <li>
-                <button
-                  type="button"
+                <Link
+                  href="/login"
                   className="hover:text-white transition-colors"
                 >
                   Patient Login
-                </button>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#locations"
+                <Link
+                  href="/register"
                   className="hover:text-white transition-colors"
                 >
-                  Register Practice
-                </a>
+                  Create Patient Account
+                </Link>
               </li>
               <li>
-                <span className="text-xs text-slate-500">
-                  Phase 1 Preview Mode
-                </span>
+                <Link
+                  href="/dashboard/help"
+                  className="hover:text-white transition-colors"
+                >
+                  Patient Help Center
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/doctor/help"
+                  className="hover:text-white transition-colors"
+                >
+                  Doctor Help & Guidelines
+                </Link>
               </li>
             </ul>
           </div>

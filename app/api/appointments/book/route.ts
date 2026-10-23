@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import type { Appointment } from "@/types";
-import { formatBookingError } from "@/lib/services/appointments";
+import { formatBookingError, sendBookingNotifications } from "@/lib/services/appointments";
 import { sendAppointmentConfirmationEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -131,7 +131,14 @@ export async function POST(req: NextRequest) {
 
     const appointment = (typeof data === "string" ? JSON.parse(data) : data) as Appointment;
 
-    // 5. Server received successful booking result -> Send confirmation email
+    // 5. Trigger notifications for patient and doctor (idempotent, safe)
+    try {
+      await sendBookingNotifications(appointment);
+    } catch (notifErr) {
+      console.warn("[MediSphere Booking] Non-fatal notification error after booking:", notifErr);
+    }
+
+    // 6. Server received successful booking result -> Send confirmation email
     let emailDelivery;
     try {
       emailDelivery = await sendAppointmentConfirmationEmail({

@@ -7,5 +7,6 @@ export * from "./slots";
 export * from "./appointments";
 export * from "./profiles";
 export * from "./reviews";
+export * from "./notifications";
 export { getCurrentDateIST } from "./slots";
 

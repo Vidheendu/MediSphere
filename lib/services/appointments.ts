@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { getCurrentDateIST } from "./slots";
+import { createNotification } from "./notifications";
 import type { Appointment, AppointmentWithDetails, AppointmentStatus } from "@/types";
 
 export interface BookAppointmentParams {
@@ -198,6 +199,11 @@ export async function bookAppointment(
     }
 
     const appointmentRow = (typeof data === "string" ? JSON.parse(data) : data) as Appointment;
+
+    // Trigger booking notifications asynchronously (safe & idempotent)
+    sendBookingNotifications(appointmentRow).catch((notifErr) => {
+      console.warn("[bookAppointment] Notification warning:", notifErr);
+    });
 
     return {
       success: true,
@@ -861,6 +867,9 @@ export async function updateDoctorAppointmentStatus(
 
     if (!error && data) {
       const updatedAppt = (typeof data === "string" ? JSON.parse(data) : data) as Appointment;
+      sendAppointmentStatusNotification(updatedAppt, newStatus).catch((notifErr) => {
+        console.warn("[updateDoctorAppointmentStatus] Notification warning:", notifErr);
+      });
       return {
         success: true,
         appointment: updatedAppt,
@@ -972,8 +981,105 @@ export async function updateDoctorAppointmentStatus(
     };
   }
 
+  const updatedAppt = updatedData as Appointment;
+  sendAppointmentStatusNotification(updatedAppt, newStatus).catch((notifErr) => {
+    console.warn("[updateDoctorAppointmentStatus] Notification fallback warning:", notifErr);
+  });
+
   return {
     success: true,
-    appointment: updatedData as Appointment,
+    appointment: updatedAppt,
   };
 }
+
+/**
+ * Sends notification for real appointment status transitions (completed, no_show).
+ * Strictly idempotent: prevents duplicate notifications for the same status change.
+ */
+export async function sendAppointmentStatusNotification(
+  appointment: Appointment,
+  newStatus: "completed" | "no_show"
+): Promise<void> {
+  try {
+    const { data: docData } = await supabase
+      .from("doctors")
+      .select("profile:profiles(full_name)")
+      .eq("id", appointment.doctor_id)
+      .maybeSingle();
+
+    const rawName = (docData as { profile?: { full_name?: string } } | null)?.profile?.full_name;
+    const doctorName = rawName ? `Dr. ${rawName}` : "your doctor";
+    const dateFormatted = formatAppointmentDateIST(appointment.appointment_date);
+
+    if (newStatus === "completed") {
+      await createNotification({
+        recipient_user_id: appointment.patient_id,
+        type: "appointment_completed",
+        title: "Appointment Completed",
+        message: `Your appointment with ${doctorName} on ${dateFormatted} has been marked as completed. You can now leave a verified review.`,
+        related_appointment_id: appointment.id,
+      });
+    } else if (newStatus === "no_show") {
+      await createNotification({
+        recipient_user_id: appointment.patient_id,
+        type: "appointment_no_show",
+        title: "Appointment Marked as No-Show",
+        message: `Your appointment with ${doctorName} on ${dateFormatted} was marked as no-show.`,
+        related_appointment_id: appointment.id,
+      });
+    }
+  } catch (err) {
+    console.warn("[sendAppointmentStatusNotification] Non-fatal notification error:", err);
+  }
+}
+
+/**
+ * Sends notifications to patient and doctor on real appointment booking.
+ * Strictly idempotent: prevents duplicate notifications for the same booking.
+ */
+export async function sendBookingNotifications(appointment: Appointment): Promise<void> {
+  try {
+    const [docRes, patientRes] = await Promise.all([
+      supabase
+        .from("doctors")
+        .select("profile_id, profile:profiles(full_name)")
+        .eq("id", appointment.doctor_id)
+        .maybeSingle(),
+      supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", appointment.patient_id)
+        .maybeSingle(),
+    ]);
+
+    const rawDocName = (docRes.data as { profile?: { full_name?: string } } | null)?.profile?.full_name;
+    const doctorName = rawDocName ? `Dr. ${rawDocName}` : "your doctor";
+    const doctorProfileId = docRes.data?.profile_id;
+    const patientName = patientRes.data?.full_name || "A patient";
+    const dateFormatted = formatAppointmentDateIST(appointment.appointment_date);
+    const timeFormatted = formatAppointmentTimeIST(appointment.start_time);
+
+    // 1. Patient notification
+    await createNotification({
+      recipient_user_id: appointment.patient_id,
+      type: "appointment_booked",
+      title: "Appointment Confirmed",
+      message: `Your appointment with ${doctorName} on ${dateFormatted} at ${timeFormatted} has been confirmed.`,
+      related_appointment_id: appointment.id,
+    });
+
+    // 2. Doctor notification
+    if (doctorProfileId) {
+      await createNotification({
+        recipient_user_id: doctorProfileId,
+        type: "appointment_booked",
+        title: "New Appointment Booking",
+        message: `New appointment booked by ${patientName} for ${dateFormatted} at ${timeFormatted}.`,
+        related_appointment_id: appointment.id,
+      });
+    }
+  } catch (err) {
+    console.warn("[sendBookingNotifications] Non-fatal notification error:", err);
+  }
+}
+

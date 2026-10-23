@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
+import { getUnreadNotificationCount } from "@/lib/services/notifications";
 
 export default function PatientDashboardNav() {
   const pathname = usePathname();
@@ -11,6 +12,25 @@ export default function PatientDashboardNav() {
   const { profile, user, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadCount() {
+      try {
+        const count = await getUnreadNotificationCount();
+        if (isMounted) setUnreadCount(count);
+      } catch {
+        // Safe silent fallback
+      }
+    }
+    loadCount();
+    const interval = setInterval(loadCount, 15000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [pathname]);
 
   const handleSignOut = async () => {
     try {
@@ -55,6 +75,53 @@ export default function PatientDashboardNav() {
       ),
     },
     {
+      name: "Notifications",
+      href: "/dashboard/notifications",
+      isActive: pathname.startsWith("/dashboard/notifications"),
+      badge: unreadCount > 0 ? unreadCount : undefined,
+      icon: (
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: "Settings",
+      href: "/dashboard/settings",
+      isActive: pathname === "/dashboard/settings" || pathname === "/dashboard/profile",
+      icon: (
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+    },
+    {
+      name: "Help",
+      href: "/dashboard/help",
+      isActive: pathname.startsWith("/dashboard/help"),
+      icon: (
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+    },
+    {
       name: "Find Doctors",
       href: "/doctors",
       isActive: pathname.startsWith("/doctors"),
@@ -65,21 +132,6 @@ export default function PatientDashboardNav() {
             strokeLinejoin="round"
             strokeWidth={2}
             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
-        </svg>
-      ),
-    },
-    {
-      name: "My Profile",
-      href: "/dashboard/profile",
-      isActive: pathname === "/dashboard/profile",
-      icon: (
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
           />
         </svg>
       ),
@@ -137,6 +189,11 @@ export default function PatientDashboardNav() {
                     {item.icon}
                   </span>
                   <span>{item.name}</span>
+                  {item.badge !== undefined && (
+                    <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-teal-600 rounded-full animate-pulse">
+                      {item.badge > 9 ? "9+" : item.badge}
+                    </span>
+                  )}
                 </Link>
               ))}
             </nav>
@@ -145,9 +202,9 @@ export default function PatientDashboardNav() {
           {/* User Profile & Actions */}
           <div className="flex items-center gap-3">
             <Link
-              href="/dashboard/profile"
+              href="/dashboard/settings"
               className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200/80 transition-colors"
-              title="View & Edit Profile"
+              title="Account Settings"
             >
               <div className="h-6 w-6 rounded-full bg-teal-600 text-white flex items-center justify-center text-xs font-bold">
                 {displayName.charAt(0).toUpperCase()}
@@ -207,16 +264,23 @@ export default function PatientDashboardNav() {
                 key={item.name}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   item.isActive
                     ? "bg-teal-50 text-teal-700 font-semibold border border-teal-200"
                     : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
-                <span className={item.isActive ? "text-teal-600" : "text-slate-400"}>
-                  {item.icon}
-                </span>
-                <span>{item.name}</span>
+                <div className="flex items-center gap-3">
+                  <span className={item.isActive ? "text-teal-600" : "text-slate-400"}>
+                    {item.icon}
+                  </span>
+                  <span>{item.name}</span>
+                </div>
+                {item.badge !== undefined && (
+                  <span className="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-teal-600 rounded-full">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
@@ -237,10 +301,16 @@ export default function PatientDashboardNav() {
               }`}
             >
               <span>{item.name}</span>
+              {item.badge !== undefined && (
+                <span className="inline-flex items-center justify-center h-4 w-4 text-[10px] font-bold text-teal-700 bg-teal-100 rounded-full">
+                  {item.badge}
+                </span>
+              )}
             </Link>
           ))}
         </div>
       </div>
+
     </header>
   );
 }

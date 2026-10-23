@@ -395,6 +395,54 @@ export type Database = {
           }
         ];
       };
+      notifications: {
+        Row: {
+          id: string;
+          recipient_user_id: string;
+          type: NotificationType;
+          title: string;
+          message: string;
+          related_appointment_id: string | null;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          recipient_user_id: string;
+          type: NotificationType;
+          title: string;
+          message: string;
+          related_appointment_id?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          recipient_user_id?: string;
+          type?: NotificationType;
+          title?: string;
+          message?: string;
+          related_appointment_id?: string | null;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_recipient_user_id_fkey";
+            columns: ["recipient_user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_related_appointment_id_fkey";
+            columns: ["related_appointment_id"];
+            isOneToOne: false;
+            referencedRelation: "appointments";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
     };
     Views: {
       doctor_public_reviews: {
@@ -451,6 +499,13 @@ export type Database = {
   };
 };
 
+export type NotificationType =
+  | "appointment_booked"
+  | "appointment_completed"
+  | "appointment_no_show"
+  | "appointment_cancelled"
+  | "system";
+
 export type DayOfWeek =
   | "Monday"
   | "Tuesday"
@@ -476,6 +531,14 @@ export type DoctorSchedule = Database["public"]["Tables"]["doctor_schedules"]["R
 export type AppointmentSlot = Database["public"]["Tables"]["appointment_slots"]["Row"];
 export type Appointment = Database["public"]["Tables"]["appointments"]["Row"];
 export type DoctorReview = Database["public"]["Tables"]["doctor_reviews"]["Row"];
+export type Notification = Database["public"]["Tables"]["notifications"]["Row"];
+
+export interface NotificationPreferences {
+  emailAlerts: boolean;
+  appointmentReminders: boolean;
+  statusUpdates: boolean;
+}
+
 
 /**
  * Privacy-safe public review projection:
