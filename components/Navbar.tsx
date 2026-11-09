@@ -15,7 +15,12 @@ export default function Navbar() {
     router.push("/login");
   };
 
-  const dashboardPath = role === "doctor" ? "/doctor/dashboard" : "/dashboard";
+  const dashboardPath =
+    role === "admin"
+      ? "/admin"
+      : role === "doctor"
+      ? "/doctor/dashboard"
+      : "/dashboard";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur-xs">
@@ -115,7 +120,9 @@ export default function Navbar() {
               >
                 <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
                 <span>
-                  {role === "doctor"
+                  {role === "admin"
+                    ? "Admin Console"
+                    : role === "doctor"
                     ? `Dr. ${profile?.full_name || "Doctor"}`
                     : profile?.full_name || "Dashboard"}
                 </span>
@@ -250,7 +257,12 @@ export default function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full py-2.5 px-4 text-center text-sm font-semibold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg"
                   >
-                    Go to {role === "doctor" ? "Doctor Dashboard" : "Patient Dashboard"}
+                    Go to{" "}
+                    {role === "admin"
+                      ? "Admin Console"
+                      : role === "doctor"
+                      ? "Doctor Dashboard"
+                      : "Patient Dashboard"}
                   </Link>
                   <button
                     type="button"

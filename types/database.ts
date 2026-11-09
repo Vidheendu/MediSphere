@@ -129,6 +129,8 @@ export type Database = {
           consultation_fee: number | null;
           about: string | null;
           verification_status: DoctorVerificationStatus;
+          rejection_reason?: string | null;
+          verified_at?: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -142,6 +144,8 @@ export type Database = {
           consultation_fee?: number | null;
           about?: string | null;
           verification_status?: DoctorVerificationStatus;
+          rejection_reason?: string | null;
+          verified_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -155,6 +159,8 @@ export type Database = {
           consultation_fee?: number | null;
           about?: string | null;
           verification_status?: DoctorVerificationStatus;
+          rejection_reason?: string | null;
+          verified_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -489,6 +495,18 @@ export type Database = {
         };
         Returns: Json;
       };
+      get_admin_dashboard_stats: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      admin_update_doctor_status: {
+        Args: {
+          p_doctor_id: string;
+          p_status: string;
+          p_reason?: string | null;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
       [_ in never]: never;
@@ -609,6 +627,26 @@ export interface AppointmentWithDetails extends Appointment {
   patient?: Profile | null;
   slot?: AppointmentSlot | null;
 }
+
+/**
+ * Real-time administrative statistics aggregated from database records.
+ * Time-based counts (e.g. upcoming appointments) strictly use Asia/Kolkata timezone.
+ */
+export interface AdminDashboardStats {
+  total_doctors: number;
+  pending_doctors: number;
+  verified_doctors: number;
+  rejected_doctors: number;
+  suspended_doctors: number;
+  total_clinics: number;
+  total_appointments: number;
+  upcoming_appointments: number;
+  total_users: number;
+  total_reviews: number;
+  timezone: string;
+  generated_at: string;
+}
+
 
 
 

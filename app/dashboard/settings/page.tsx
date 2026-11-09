@@ -36,13 +36,17 @@ export default function PatientSettingsPage() {
   // Initialize fields from auth context profile
   useEffect(() => {
     if (profile) {
-      setFullName(profile.full_name || "");
-      setPhone(profile.phone || "");
-      setLocation(profile.location || "");
+      queueMicrotask(() => {
+        setFullName(profile.full_name || "");
+        setPhone(profile.phone || "");
+        setLocation(profile.location || "");
+      });
     } else if (user?.user_metadata) {
-      setFullName(user.user_metadata.full_name || "");
-      setPhone(user.user_metadata.phone || "");
-      setLocation(user.user_metadata.location || "");
+      queueMicrotask(() => {
+        setFullName(user.user_metadata.full_name || "");
+        setPhone(user.user_metadata.phone || "");
+        setLocation(user.user_metadata.location || "");
+      });
     }
   }, [profile, user]);
 

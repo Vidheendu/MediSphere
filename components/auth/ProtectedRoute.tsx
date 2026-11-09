@@ -19,7 +19,9 @@ export default function ProtectedRoute({
   const { user, role, loading, signOut } = useAuth();
   const router = useRouter();
 
-  const defaultRedirect = allowedRoles.includes("doctor")
+  const defaultRedirect = allowedRoles.includes("admin")
+    ? "/admin/login"
+    : allowedRoles.includes("doctor")
     ? "/doctor/login"
     : "/login";
   const targetRedirect = redirectPath || defaultRedirect;
@@ -64,8 +66,14 @@ export default function ProtectedRoute({
 
   // Role Mismatch / Access Denied State
   if (role && !allowedRoles.includes(role)) {
+    const isAdminArea = allowedRoles.includes("admin");
     const isDoctorArea = allowedRoles.includes("doctor");
-    const correctDashboard = role === "doctor" ? "/doctor/dashboard" : "/dashboard";
+    const correctDashboard =
+      role === "admin"
+        ? "/admin"
+        : role === "doctor"
+        ? "/doctor/dashboard"
+        : "/dashboard";
 
     return (
       <div className="min-h-[75vh] flex items-center justify-center bg-slate-50 px-4 py-12">
@@ -92,7 +100,9 @@ export default function ProtectedRoute({
           </h1>
 
           <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-            {isDoctorArea
+            {isAdminArea
+              ? "This section is strictly restricted to MediSphere System Administrators. Healthcare provider and patient accounts cannot access the Administration Panel."
+              : isDoctorArea
               ? "This section is restricted strictly to verified healthcare providers. Patient accounts cannot access the Doctor Portal."
               : "This dashboard is configured for patients. Doctor accounts cannot access the Patient Dashboard."}
           </p>

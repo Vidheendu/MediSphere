@@ -39,6 +39,9 @@ interface AuthContextType {
   signInDoctor: (
     credentials: LoginCredentials
   ) => Promise<{ success: boolean; error?: string }>;
+  signInAdmin: (
+    credentials: LoginCredentials
+  ) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<Profile | null>;
 }
@@ -319,6 +322,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [fetchProfile]
   );
 
+  // Sign in administrator (Strictly verifies role = 'admin')
+  const signInAdmin = useCallback(
+    async (
+      credentials: LoginCredentials
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        setLoading(true);
+
+        const { data: authData, error: authError } =
+          await supabase.auth.signInWithPassword({
+            email: credentials.email,
+            password: credentials.password,
+          });
+
+        if (authError) {
+          return { success: false, error: authError.message };
+        }
+
+        const loggedUser = authData?.user;
+        if (!loggedUser) {
+          return { success: false, error: "Authentication failed. No user session returned." };
+        }
+
+        // Strictly verify admin role in the database profiles table
+        const userProfile = await fetchProfile(loggedUser.id);
+
+        if (!userProfile || userProfile.role !== "admin") {
+          // Immediately revoke session for unauthorized role
+          await supabase.auth.signOut();
+          setUser(null);
+          setProfile(null);
+          return {
+            success: false,
+            error:
+              "Access Denied: This account does not possess Administrator privileges.",
+          };
+        }
+
+        setUser(loggedUser);
+        setProfile(userProfile);
+        return { success: true };
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Unexpected administrator sign-in error.";
+        return { success: false, error: message };
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchProfile]
+  );
+
   // Sign out
   const signOut = useCallback(async () => {
     try {
@@ -342,10 +396,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUpPatient,
       signInPatient,
       signInDoctor,
+      signInAdmin,
       signOut,
       refreshProfile,
     }),
-    [user, profile, loading, signUpPatient, signInPatient, signInDoctor, signOut, refreshProfile]
+    [user, profile, loading, signUpPatient, signInPatient, signInDoctor, signInAdmin, signOut, refreshProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

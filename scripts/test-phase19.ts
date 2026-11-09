@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import { DEFAULT_NOTIFICATION_PREFERENCES } from "../lib/services/profiles";
-import type { Notification, NotificationType, NotificationPreferences } from "../types";
 
 // Colors for terminal output
 const colors = {

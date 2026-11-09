@@ -90,7 +90,6 @@ export default function PatientNotificationsPage() {
 
   const fetchList = useCallback(async () => {
     try {
-      setLoading(true);
       const list = await getNotifications(50);
       setNotifications(list);
     } catch (err) {
@@ -101,10 +100,30 @@ export default function PatientNotificationsPage() {
   }, []);
 
   useEffect(() => {
-    if (user) {
-      fetchList();
+    let ignore = false;
+    if (!user) return;
+
+    async function loadNotifications() {
+      try {
+        const list = await getNotifications(50);
+        if (!ignore) {
+          setNotifications(list);
+        }
+      } catch (err) {
+        console.error("[PatientNotificationsPage] Load error:", err);
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
     }
-  }, [user, fetchList]);
+
+    loadNotifications();
+
+    return () => {
+      ignore = true;
+    };
+  }, [user]);
 
   const handleMarkAsRead = async (id: string) => {
     try {

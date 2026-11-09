@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-context";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -44,47 +44,55 @@ export default function DoctorSettingsPage() {
   const [prefsSuccess, setPrefsSuccess] = useState<string | null>(null);
   const [prefsError, setPrefsError] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [docData, p] = await Promise.all([
-        getDoctorSelfDetails(),
-        getNotificationPreferences(),
-      ]);
-
-      if (docData.profile) {
-        setProfile(docData.profile);
-        setFullName(docData.profile.full_name || "");
-        setPhone(docData.profile.phone || "");
-        setLocation(docData.profile.location || "");
-      } else if (authProfile) {
-        setProfile(authProfile);
-        setFullName(authProfile.full_name || "");
-        setPhone(authProfile.phone || "");
-        setLocation(authProfile.location || "");
-      }
-
-      if (docData.doctor) {
-        setDoctor(docData.doctor);
-        setQualification(docData.doctor.qualification || "");
-        setExperienceYears(docData.doctor.experience_years !== null ? String(docData.doctor.experience_years) : "");
-        setConsultationFee(docData.doctor.consultation_fee !== null ? String(docData.doctor.consultation_fee) : "");
-        setAbout(docData.doctor.about || "");
-      }
-
-      setPrefs(p);
-    } catch (err) {
-      console.error("[DoctorSettingsPage] Load error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [authProfile]);
-
   useEffect(() => {
-    if (user) {
-      loadData();
+    let ignore = false;
+    if (!user) return;
+
+    async function initializeDoctorSettings() {
+      try {
+        const [docData, p] = await Promise.all([
+          getDoctorSelfDetails(),
+          getNotificationPreferences(),
+        ]);
+
+        if (ignore) return;
+
+        if (docData.profile) {
+          setProfile(docData.profile);
+          setFullName(docData.profile.full_name || "");
+          setPhone(docData.profile.phone || "");
+          setLocation(docData.profile.location || "");
+        } else if (authProfile) {
+          setProfile(authProfile);
+          setFullName(authProfile.full_name || "");
+          setPhone(authProfile.phone || "");
+          setLocation(authProfile.location || "");
+        }
+
+        if (docData.doctor) {
+          setDoctor(docData.doctor);
+          setQualification(docData.doctor.qualification || "");
+          setExperienceYears(docData.doctor.experience_years !== null ? String(docData.doctor.experience_years) : "");
+          setConsultationFee(docData.doctor.consultation_fee !== null ? String(docData.doctor.consultation_fee) : "");
+          setAbout(docData.doctor.about || "");
+        }
+
+        setPrefs(p);
+      } catch (err) {
+        console.error("[DoctorSettingsPage] Load error:", err);
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
     }
-  }, [user, loadData]);
+
+    initializeDoctorSettings();
+
+    return () => {
+      ignore = true;
+    };
+  }, [user, authProfile]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

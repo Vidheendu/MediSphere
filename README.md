@@ -290,3 +290,39 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
   - **Screen Reader Support**: Hidden and focus-revealed keyboard navigation rail with direct links to all 6 specialities.
   - **Reduced Motion Support**: Detects `prefers-reduced-motion` at OS level, pausing orbital rotation and model oscillations.
   - **WebGL Error Safeguard**: Built-in `WebGLErrorBoundary` and client-side `detectWebGL()` gracefully fall back to 2D view if hardware acceleration is unavailable.
+
+## Phase 19 — Help, Settings, and Notifications
+
+- **Notification Engine**: Event-driven notification architecture for appointment confirmations, completions, cancellations, and no-shows.
+- **Account Settings**: Patient settings (`/dashboard/settings`) and doctor practice settings (`/doctor/settings`) with strict role-immutability protection.
+- **Help Centers**: Dedicated help centers for patients (`/dashboard/help`) and healthcare providers (`/doctor/help`).
+
+## Phase 20 — Admin Panel, Security Audit & Deployment Readiness
+
+- **Secure Administrator Area**:
+  - Administrator Console at `/admin`.
+  - Subroutes: `/admin/doctors`, `/admin/clinics`, `/admin/appointments`, `/admin/users`, `/admin/reviews`, and `/admin/login`.
+  - Strict server/database-side authorization: `role === 'admin'` checked via database RLS and security definer functions.
+  - Zero client privilege escalation; users cannot grant themselves admin privileges through registration or profile updates.
+- **Admin Dashboard**: Real-time database metrics (total doctors, pending/verified/rejected doctors, total clinics, total appointments, upcoming appointments in `Asia/Kolkata` timezone, registered users, and verified reviews).
+- **Doctor Verification Management** (`/admin/doctors`):
+  - Inspection of pending doctors, qualifications, associated clinics, and public registry provenance.
+  - Full verification / rejection workflow with auditable rejection reasons and automatic doctor notifications.
+  - Public listings strictly hide unverified doctors.
+- **Clinic Governance** (`/admin/clinics`):
+  - Audit and edit facility details, physical addresses, contact information, and verified GPS coordinates.
+- **Appointment Oversight** (`/admin/appointments`):
+  - Read-only operational oversight of bookings with patient privacy protection and strict isolation.
+- **User Governance** (`/admin/users`):
+  - Read-only audit of registered accounts. Passwords, hashes, and session tokens are never exposed.
+- **Review Oversight** (`/admin/reviews`):
+  - Administrative inspection and moderation of patient reviews submitted for completed consultations.
+- **Comprehensive Security Audit**:
+  - Full RLS enforcement across all 9 database tables.
+  - Atomic booking with `FOR UPDATE` lock and `unique_appointment_slot` constraint.
+  - Zero service-role keys in client bundles.
+  - Zero secrets committed to Git.
+  - Documented initial admin setup procedure (`scripts/promote-admin.ts`).
+- **Production Deployment Readiness**:
+  - Detailed deployment instructions in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+  - Validated `.env.example` with placeholders only.

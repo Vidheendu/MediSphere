@@ -192,6 +192,14 @@ export default function Footer() {
                   Doctor Help & Guidelines
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/admin/login"
+                  className="text-slate-500 hover:text-slate-400 text-xs transition-colors"
+                >
+                  Admin Console
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
