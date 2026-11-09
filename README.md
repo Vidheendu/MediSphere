@@ -258,57 +258,6 @@ Automated verification scripts are available in the `scripts/` directory.
 
 ---
 
-## 🌍 Deployment
-
-MediSphere is prepared for deployment using Vercel and Supabase.
-
-The deployment documentation covers:
-
-- Supabase database configuration and migrations.
-- Initial administrator setup.
-- Environment variable configuration.
-- Resend email configuration.
-- Google Maps API configuration.
-- Vercel deployment.
-- Post-deployment smoke testing.
-
-See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) before deploying.
-
----
-
-## 🗺️ Project Roadmap
-
-| Phase | Feature |
-|---|---|
-| 01–05 | Project foundation, database and authentication |
-| 06–09 | Doctor data and speciality discovery |
-| 10–11 | Doctor schedules and appointment slots |
-| 12–14 | Booking and patient/doctor dashboards |
-| 15–16 | Email confirmations and reviews |
-| 17–18 | Maps and 3D speciality discovery |
-| 19 | Help, settings and notifications |
-| 20 | Admin dashboard, security audit and deployment readiness |
-
----
-
-## ⚠️ Project Status
-
-Development phases 1–20 have been completed.
-
-The reported Phase 20 verification included:
-
-- 82/82 Phase 20 automated checks passed.
-- 56/56 Phase 19 checks passed.
-- 79/79 Phase 18 checks passed.
-- 25/25 Phase 17 checks passed.
-- ESLint: 0 errors and 0 warnings.
-- TypeScript: no type errors.
-- Production build completed successfully.
-
-Cloud deployment and live production functionality must still be verified separately.
-
----
-
 ## 🤝 Contributing
 
 Contributions, suggestions, and improvements are welcome.
